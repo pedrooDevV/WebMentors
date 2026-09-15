@@ -7,8 +7,10 @@ export default defineConfig({
         react(),
         tailwindcss()
     ],
+
     define: {
-    global: 'globalThis'
-  },
-   base: '/WebMentors/',
+        global: 'globalThis'
+    },
+
+    base: '/WebMentors/',
 })
