@@ -12,5 +12,5 @@ export default defineConfig({
         global: 'globalThis'
     },
 
-    base: '/WebMentors/',
+    base: '/mentorsWeb/',
 })
