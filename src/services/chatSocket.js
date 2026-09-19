@@ -1,7 +1,7 @@
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
-const WS_URL = "http://webmentorsback-production.up.railway.app/LeoApi/ws";
+const WS_URL = "https://webmentorsback-production.up.railway.app/LeoApi/ws";
 
 let client = null;
 
