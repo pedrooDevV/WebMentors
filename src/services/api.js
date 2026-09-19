@@ -77,7 +77,8 @@ export async function buscarEspecialidades(dadosEspecialidade) {
 
 export async function buscarUsuariosApi() {
   try {
-    const response = await fetch("https://webmentorsback-production.up.railway.app/LeoApi/users"); // Substitua pela sua URL/porta
+    const response = await fetch(`${API_URL}/users`);
+
     const usuarios = await response.json();
 
     return usuarios;
@@ -86,7 +87,6 @@ export async function buscarUsuariosApi() {
   }
 }
 
-buscarUsuariosApi();
 
 export async function criarAgendaApi(dadosAgenda) {
   const token = localStorage.getItem("token");
