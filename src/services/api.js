@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = `${import.meta.env.VITE_API_URL}/LeoApi`;
 
 export async function agendarMentoriaApi(agendaId) {
   const token = localStorage.getItem("token");
@@ -77,7 +77,7 @@ export async function buscarEspecialidades(dadosEspecialidade) {
 
 export async function buscarUsuariosApi() {
   try {
-    const response = await fetch("http://webmentorsback-production.up.railway.app/LeoApi/users"); // Substitua pela sua URL/porta
+    const response = await fetch("https://webmentorsback-production.up.railway.app/LeoApi/users"); // Substitua pela sua URL/porta
     const usuarios = await response.json();
 
     return usuarios;
