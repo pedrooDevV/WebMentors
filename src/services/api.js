@@ -77,7 +77,7 @@ export async function buscarEspecialidades(dadosEspecialidade) {
 
 export async function buscarUsuariosApi() {
   try {
-    const response = await fetch("http://localhost:8080/LeoApi/users"); // Substitua pela sua URL/porta
+    const response = await fetch("http://webmentorsback-production.up.railway.app/LeoApiLeoApi/users"); // Substitua pela sua URL/porta
     const usuarios = await response.json();
 
     return usuarios;
