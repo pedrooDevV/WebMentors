@@ -45,19 +45,26 @@ export async function loginApi(dadosLogin) {
   return data;
 }
 
-// POST /LeoApi/registrar
 export async function registrarUsuarioApi(dadosUsuario) {
-  const response = await fetch(`${API_URL}/registraMentoresEClientes`, {
+  const token = localStorage.getItem("token"); // ou onde seu token estiver armazenado
+
+  const response = await fetch("https://webmentorsback-production.up.railway.app/LeoApi/registraMentoresEClientes", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(dadosUsuario),
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}` // <<--- ESSENCIAL PARA EVITAR O 403
+    },
+    body: JSON.stringify(dadosUsuario)
   });
 
   if (!response.ok) {
-    throw new Error("Erro ao registrar usuário");
+    if (response.status === 403) {
+      throw new Error("Acesso negado: Token ausente, expirado ou perfil sem permissão.");
+    }
+    throw new Error("Erro ao registrar usuário.");
   }
 
-  return response.status === 201;
+  return await response.json();
 }
 
 // POST /LeoApi/buscarEspecialidade
