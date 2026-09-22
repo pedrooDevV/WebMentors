@@ -65,31 +65,73 @@ export default function ClienteDashboard({
   function eMinhaMensagem(mensagem) {
     if (!mensagem || !user) return false;
 
-    // 1. Verifica se já vem a flag booleana direta do backend
+    // 1. Flags diretas enviadas pelo backend
     if (typeof mensagem.minhaMensagem === "boolean") return mensagem.minhaMensagem;
     if (typeof mensagem.isMine === "boolean") return mensagem.isMine;
+    if (typeof mensagem.minha === "boolean") return mensagem.minha;
 
-    // 2. Extrai IDs do Usuário Logado
-    const meuId = String(
-      user.id || user.usuarioId || user.idUsuario || user.clienteId || ""
-    ).trim();
+    // Extrai IDs (suporta números, strings e objetos aninhados)
+    const obterId = (obj) => {
+      if (!obj) return null;
+      if (typeof obj === "number" || typeof obj === "string") return String(obj).trim();
+      return (
+        obj.id ||
+        obj.usuarioId ||
+        obj.idUsuario ||
+        obj.clienteId ||
+        obj.mentorId ||
+        obj.codigo ||
+        obj.sub ||
+        obj.usuario?.id ||
+        obj.user?.id ||
+        null
+      );
+    };
 
-    // 3. Extrai IDs do Remetente da Mensagem
+    const meuId = String(obterId(user) || "").trim();
     const remetenteId = String(
       mensagem.remetenteId ||
         mensagem.idRemetente ||
         mensagem.senderId ||
         mensagem.usuarioId ||
         mensagem.clienteId ||
+        mensagem.mentorId ||
+        mensagem.autorId ||
         mensagem.remetente?.id ||
+        mensagem.usuario?.id ||
         ""
     ).trim();
 
+    // 2. Comparação por ID
     if (meuId && remetenteId && meuId === remetenteId) {
       return true;
     }
 
-    // 4. Verificação por Perfil/Role se enviado pelo backend
+    // 3. Comparação por Email
+    const meuEmail = String(user.email || user.usuario?.email || "").toLowerCase().trim();
+    const remetenteEmail = String(
+      mensagem.emailRemetente || mensagem.remetenteEmail || mensagem.remetente?.email || ""
+    ).toLowerCase().trim();
+
+    if (meuEmail && remetenteEmail && meuEmail === remetenteEmail) {
+      return true;
+    }
+
+    // 4. Comparação por Nome (Fallback)
+    const meuNome = String(user.nome || user.name || user.usuario?.nome || "").toLowerCase().trim();
+    const nomeRemetente = String(
+      mensagem.nomeRemetente ||
+        mensagem.remetenteNome ||
+        mensagem.autor ||
+        mensagem.remetente?.nome ||
+        ""
+    ).toLowerCase().trim();
+
+    if (meuNome && nomeRemetente && meuNome === nomeRemetente) {
+      return true;
+    }
+
+    // 5. Comparação por Perfil/Role
     const tipoRemetente = String(
       mensagem.tipoRemetente || mensagem.remetenteTipo || mensagem.role || ""
     ).toUpperCase();
@@ -828,7 +870,6 @@ export default function ClienteDashboard({
                           {mensagensChat.map((mensagem) => {
                             const minha = eMinhaMensagem(mensagem);
 
-                            // Pega nome vindo diretamente do objeto mensagem se existir
                             const nomeRemetenteMensagem =
                               mensagem.nomeRemetente ||
                               mensagem.remetenteNome ||
