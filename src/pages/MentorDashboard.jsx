@@ -62,27 +62,43 @@ export default function MentorDashboard({
   const mensagensEndRef = useRef(null);
 
   // =========================================================
-  // HELPER PARA IDENTIFICAR MINHA MENSAGEM
+  // HELPER PARA IDENTIFICAR MINHA MENSAGEM (CORRIGIDO)
   // =========================================================
 
   function eMinhaMensagem(mensagem) {
     if (!mensagem || !user) return false;
-    const meuId = String(user.id || user.usuarioId || user.idUsuario || "");
+
+    // 1. Verifica se já vem a flag booleana direta do backend
+    if (typeof mensagem.minhaMensagem === "boolean") return mensagem.minhaMensagem;
+    if (typeof mensagem.isMine === "boolean") return mensagem.isMine;
+
+    // 2. Extrai IDs do Usuário Logado
+    const meuId = String(
+      user.id || user.usuarioId || user.idUsuario || user.mentorId || ""
+    ).trim();
+
+    // 3. Extrai IDs do Remetente da Mensagem
     const remetenteId = String(
       mensagem.remetenteId ||
         mensagem.idRemetente ||
         mensagem.senderId ||
         mensagem.usuarioId ||
+        mensagem.mentorId ||
         mensagem.remetente?.id ||
         ""
-    );
+    ).trim();
 
-    if (meuId && remetenteId) {
-      return meuId === remetenteId;
+    if (meuId && remetenteId && meuId === remetenteId) {
+      return true;
     }
 
-    if (typeof mensagem.minhaMensagem === "boolean") {
-      return mensagem.minhaMensagem;
+    // 4. Verificação por Perfil/Role se enviado pelo backend
+    const tipoRemetente = String(
+      mensagem.tipoRemetente || mensagem.remetenteTipo || mensagem.role || ""
+    ).toUpperCase();
+
+    if (tipoRemetente === "MENTOR") {
+      return true;
     }
 
     return false;
@@ -282,7 +298,7 @@ export default function MentorDashboard({
   }
 
   // =========================================================
-  // ENVIAR MENSAGEM COM SUPORTE A RESPOSTA
+  // ENVIAR MENSAGEM
   // =========================================================
 
   function enviarMensagemChat() {
@@ -827,9 +843,19 @@ export default function MentorDashboard({
                         <div className="max-w-3xl mx-auto space-y-3">
                           {mensagensChat.map((mensagem) => {
                             const minha = eMinhaMensagem(mensagem);
+
+                            // Pega nome vindo diretamente do objeto mensagem se existir
+                            const nomeRemetenteMensagem =
+                              mensagem.nomeRemetente ||
+                              mensagem.remetenteNome ||
+                              mensagem.autor ||
+                              mensagem.remetente?.nome;
+
                             const autorNome = minha
                               ? "Você"
-                              : conversaAtualObj?.clienteNome || "Cliente";
+                              : nomeRemetenteMensagem ||
+                                conversaAtualObj?.clienteNome ||
+                                "Cliente";
 
                             return (
                               <div

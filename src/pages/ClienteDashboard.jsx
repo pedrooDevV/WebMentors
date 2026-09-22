@@ -59,27 +59,43 @@ export default function ClienteDashboard({
   const mensagensEndRef = useRef(null);
 
   // =========================================================
-  // HELPER PARA IDENTIFICAR MINHA MENSAGEM
+  // HELPER PARA IDENTIFICAR MINHA MENSAGEM (CORRIGIDO)
   // =========================================================
 
   function eMinhaMensagem(mensagem) {
     if (!mensagem || !user) return false;
-    const meuId = String(user.id || user.usuarioId || user.idUsuario || "");
+
+    // 1. Verifica se já vem a flag booleana direta do backend
+    if (typeof mensagem.minhaMensagem === "boolean") return mensagem.minhaMensagem;
+    if (typeof mensagem.isMine === "boolean") return mensagem.isMine;
+
+    // 2. Extrai IDs do Usuário Logado
+    const meuId = String(
+      user.id || user.usuarioId || user.idUsuario || user.clienteId || ""
+    ).trim();
+
+    // 3. Extrai IDs do Remetente da Mensagem
     const remetenteId = String(
       mensagem.remetenteId ||
         mensagem.idRemetente ||
         mensagem.senderId ||
         mensagem.usuarioId ||
+        mensagem.clienteId ||
         mensagem.remetente?.id ||
         ""
-    );
+    ).trim();
 
-    if (meuId && remetenteId) {
-      return meuId === remetenteId;
+    if (meuId && remetenteId && meuId === remetenteId) {
+      return true;
     }
 
-    if (typeof mensagem.minhaMensagem === "boolean") {
-      return mensagem.minhaMensagem;
+    // 4. Verificação por Perfil/Role se enviado pelo backend
+    const tipoRemetente = String(
+      mensagem.tipoRemetente || mensagem.remetenteTipo || mensagem.role || ""
+    ).toUpperCase();
+
+    if (tipoRemetente === "CLIENTE") {
+      return true;
     }
 
     return false;
@@ -313,7 +329,7 @@ export default function ClienteDashboard({
   }
 
   // =========================================================
-  // ENVIAR MENSAGEM COM SUPORTE A RESPOSTA
+  // ENVIAR MENSAGEM
   // =========================================================
 
   function enviarMensagemChat() {
@@ -811,9 +827,19 @@ export default function ClienteDashboard({
                         <div className="max-w-3xl mx-auto space-y-3">
                           {mensagensChat.map((mensagem) => {
                             const minha = eMinhaMensagem(mensagem);
+
+                            // Pega nome vindo diretamente do objeto mensagem se existir
+                            const nomeRemetenteMensagem =
+                              mensagem.nomeRemetente ||
+                              mensagem.remetenteNome ||
+                              mensagem.autor ||
+                              mensagem.remetente?.nome;
+
                             const autorNome = minha
                               ? "Você"
-                              : solicitacaoAtual?.mentorNome || "Mentor";
+                              : nomeRemetenteMensagem ||
+                                solicitacaoAtual?.mentorNome ||
+                                "Mentor";
 
                             return (
                               <div
@@ -869,7 +895,7 @@ export default function ClienteDashboard({
                                     </p>
                                   )}
 
-                                  {/* RODA PÉ DA MENSAGEM: HORA + BOTOES */}
+                                  {/* RODA PÉ DA MENSAGEM */}
                                   <div
                                     className={`flex items-center justify-end gap-2 mt-1 ${
                                       minha
