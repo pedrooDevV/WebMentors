@@ -1,4 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import {
   buscarMinhaAgendaApi,
@@ -18,14 +22,19 @@ import {
   enviarMensagem,
 } from "../services/chatSocket";
 
-export default function MentorDashboard({ user, showToast }) {
+export default function MentorDashboard({
+  user,
+  showToast,
+}) {
   // =========================================================
   // ESTADOS
   // =========================================================
 
-  const [activeTab, setActiveTab] = useState("agenda");
+  const [activeTab, setActiveTab] =
+    useState("agenda");
 
-  const [agendaSlots, setAgendaSlots] = useState([]);
+  const [agendaSlots, setAgendaSlots] =
+    useState([]);
 
   const [solicitacoes, setSolicitacoes] =
     useState([]);
@@ -66,8 +75,37 @@ export default function MentorDashboard({ user, showToast }) {
   const [excluindoId, setExcluindoId] =
     useState(null);
 
+  // =========================================================
+  // REFS
+  // =========================================================
+
+  const subscriptionSolicitacaoRef =
+    useRef(null);
+
   const subscriptionChatRef =
     useRef(null);
+
+  const mensagensEndRef =
+    useRef(null);
+
+  // =========================================================
+  // AUTO SCROLL
+  // =========================================================
+
+  useEffect(() => {
+    if (!conversaAtual) {
+      return;
+    }
+
+    setTimeout(() => {
+      mensagensEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+      });
+    }, 50);
+  }, [
+    mensagensChat,
+    conversaAtual,
+  ]);
 
   // =========================================================
   // AGENDA
@@ -85,7 +123,9 @@ export default function MentorDashboard({ user, showToast }) {
         await buscarMinhaAgendaApi();
 
       setAgendaSlots(
-        Array.isArray(data) ? data : [],
+        Array.isArray(data)
+          ? data
+          : [],
       );
     } catch (error) {
       console.error(
@@ -108,55 +148,81 @@ export default function MentorDashboard({ user, showToast }) {
 
   useEffect(() => {
     carregarSolicitacoes();
-
     carregarConversas();
 
-    conectarChat((solicitacao) => {
-      console.log(
-        "📩 SOLICITAÇÃO RECEBIDA:",
-        solicitacao,
+    const subscription =
+      conectarChat(
+        (solicitacao) => {
+          console.log(
+            "📩 SOLICITAÇÃO RECEBIDA:",
+            solicitacao,
+          );
+
+          setSolicitacoes(
+            (prev) => {
+              const existe =
+                prev.some(
+                  (item) =>
+                    Number(item.id) ===
+                    Number(
+                      solicitacao.id,
+                    ),
+                );
+
+              if (existe) {
+                return prev.map(
+                  (item) =>
+                    Number(item.id) ===
+                    Number(
+                      solicitacao.id,
+                    )
+                      ? solicitacao
+                      : item,
+                );
+              }
+
+              return [
+                solicitacao,
+                ...prev,
+              ];
+            },
+          );
+
+          if (
+            solicitacao.status ===
+            "PENDENTE"
+          ) {
+            showToast?.(
+              `Nova solicitação de ${solicitacao.clienteNome}`,
+            );
+          }
+
+          if (
+            solicitacao.status ===
+            "ACEITA"
+          ) {
+            carregarConversas();
+          }
+        },
       );
 
-      setSolicitacoes((prev) => {
-        const existe = prev.some(
-          (item) =>
-            item.id === solicitacao.id,
-        );
-
-        if (existe) {
-          return prev.map((item) =>
-            item.id === solicitacao.id
-              ? solicitacao
-              : item,
-          );
-        }
-
-        return [
-          solicitacao,
-          ...prev,
-        ];
-      });
-
-      if (
-        solicitacao.status ===
-        "PENDENTE"
-      ) {
-        showToast?.(
-          `Nova solicitação de ${solicitacao.clienteNome}`,
-        );
-      }
-
-      if (
-        solicitacao.status ===
-        "ACEITA"
-      ) {
-        carregarConversas();
-      }
-    });
+    subscriptionSolicitacaoRef.current =
+      subscription;
 
     return () => {
-      if (subscriptionChatRef.current) {
-        subscriptionChatRef.current.unsubscribe();
+      if (
+        subscriptionSolicitacaoRef.current
+      ) {
+        subscriptionSolicitacaoRef.current.unsubscribe?.();
+
+        subscriptionSolicitacaoRef.current =
+          null;
+      }
+
+      if (
+        subscriptionChatRef.current
+      ) {
+        subscriptionChatRef.current.unsubscribe?.();
 
         subscriptionChatRef.current =
           null;
@@ -170,13 +236,17 @@ export default function MentorDashboard({ user, showToast }) {
 
   async function carregarSolicitacoes() {
     try {
-      setLoadingSolicitacoes(true);
+      setLoadingSolicitacoes(
+        true,
+      );
 
       const data =
         await buscarSolicitacoesMentorApi();
 
       setSolicitacoes(
-        Array.isArray(data) ? data : [],
+        Array.isArray(data)
+          ? data
+          : [],
       );
     } catch (error) {
       console.error(
@@ -184,7 +254,9 @@ export default function MentorDashboard({ user, showToast }) {
         error,
       );
     } finally {
-      setLoadingSolicitacoes(false);
+      setLoadingSolicitacoes(
+        false,
+      );
     }
   }
 
@@ -194,13 +266,17 @@ export default function MentorDashboard({ user, showToast }) {
 
   async function carregarConversas() {
     try {
-      setLoadingConversas(true);
+      setLoadingConversas(
+        true,
+      );
 
       const data =
         await buscarConversasMentorApi();
 
       setConversas(
-        Array.isArray(data) ? data : [],
+        Array.isArray(data)
+          ? data
+          : [],
       );
     } catch (error) {
       console.error(
@@ -208,7 +284,9 @@ export default function MentorDashboard({ user, showToast }) {
         error,
       );
     } finally {
-      setLoadingConversas(false);
+      setLoadingConversas(
+        false,
+      );
     }
   }
 
@@ -225,12 +303,17 @@ export default function MentorDashboard({ user, showToast }) {
           solicitacao.id,
         );
 
-      setSolicitacoes((prev) =>
-        prev.map((item) =>
-          item.id === solicitacao.id
-            ? resposta
-            : item,
-        ),
+      setSolicitacoes(
+        (prev) =>
+          prev.map(
+            (item) =>
+              Number(item.id) ===
+              Number(
+                solicitacao.id,
+              )
+                ? resposta
+                : item,
+          ),
       );
 
       await carregarConversas();
@@ -258,9 +341,10 @@ export default function MentorDashboard({ user, showToast }) {
   async function recusarSolicitacao(
     solicitacao,
   ) {
-    const confirmou = window.confirm(
-      `Deseja recusar a solicitação de ${solicitacao.clienteNome}?`,
-    );
+    const confirmou =
+      window.confirm(
+        `Deseja recusar a solicitação de ${solicitacao.clienteNome}?`,
+      );
 
     if (!confirmou) {
       return;
@@ -272,12 +356,17 @@ export default function MentorDashboard({ user, showToast }) {
           solicitacao.id,
         );
 
-      setSolicitacoes((prev) =>
-        prev.map((item) =>
-          item.id === solicitacao.id
-            ? resposta
-            : item,
-        ),
+      setSolicitacoes(
+        (prev) =>
+          prev.map(
+            (item) =>
+              Number(item.id) ===
+              Number(
+                solicitacao.id,
+              )
+                ? resposta
+                : item,
+          ),
       );
 
       showToast?.(
@@ -305,18 +394,20 @@ export default function MentorDashboard({ user, showToast }) {
   ) {
     try {
       setLoadingChat(true);
-
       setTextoMensagem("");
 
-      /*
-       * A conversa selecionada é alterada
-       * antes de carregar as mensagens.
-       *
-       * Assim o campo de envio fica
-       * sempre vinculado ao cliente
-       * que foi clicado.
-       */
-      setConversaAtual(conversaId);
+      if (
+        subscriptionChatRef.current
+      ) {
+        subscriptionChatRef.current.unsubscribe?.();
+
+        subscriptionChatRef.current =
+          null;
+      }
+
+      setConversaAtual(
+        conversaId,
+      );
 
       const mensagens =
         await buscarMensagensApi(
@@ -329,60 +420,66 @@ export default function MentorDashboard({ user, showToast }) {
           : [],
       );
 
-      if (subscriptionChatRef.current) {
-        subscriptionChatRef.current.unsubscribe();
-
-        subscriptionChatRef.current =
-          null;
-      }
-
       const subscription =
         entrarNaConversa(
           conversaId,
           (evento) => {
-            /*
-             * Evento de exclusão.
-             */
-            if (evento?.mensagemId) {
-              setMensagensChat((prev) =>
-                prev.filter(
-                  (mensagem) =>
-                    Number(
-                      mensagem.id,
-                    ) !==
-                    Number(
-                      evento.mensagemId,
-                    ),
-                ),
+            // =============================================
+            // EXCLUSÃO
+            // =============================================
+
+            if (
+              evento?.mensagemId
+            ) {
+              setMensagensChat(
+                (prev) =>
+                  prev.filter(
+                    (mensagem) =>
+                      Number(
+                        mensagem.id,
+                      ) !==
+                      Number(
+                        evento.mensagemId,
+                      ),
+                  ),
               );
 
               return;
             }
 
-            /*
-             * Mensagem nova.
-             */
-            setMensagensChat((prev) => {
-              const existe =
-                prev.some(
-                  (mensagem) =>
-                    Number(
-                      mensagem.id,
-                    ) ===
-                    Number(
-                      evento.id,
-                    ),
-                );
+            // =============================================
+            // NOVA MENSAGEM
+            // =============================================
 
-              if (existe) {
-                return prev;
-              }
+            if (
+              !evento?.id
+            ) {
+              return;
+            }
 
-              return [
-                ...prev,
-                evento,
-              ];
-            });
+            setMensagensChat(
+              (prev) => {
+                const existe =
+                  prev.some(
+                    (mensagem) =>
+                      Number(
+                        mensagem.id,
+                      ) ===
+                      Number(
+                        evento.id,
+                      ),
+                  );
+
+                if (existe) {
+                  return prev;
+                }
+
+                return [
+                  ...prev,
+                  evento,
+                ];
+              },
+            );
           },
         );
 
@@ -407,18 +504,22 @@ export default function MentorDashboard({ user, showToast }) {
     }
   }
 
+  // =========================================================
+  // FECHAR CONVERSA
+  // =========================================================
+
   function fecharConversa() {
-    if (subscriptionChatRef.current) {
-      subscriptionChatRef.current.unsubscribe();
+    if (
+      subscriptionChatRef.current
+    ) {
+      subscriptionChatRef.current.unsubscribe?.();
 
       subscriptionChatRef.current =
         null;
     }
 
     setConversaAtual(null);
-
     setMensagensChat([]);
-
     setTextoMensagem("");
   }
 
@@ -457,9 +558,10 @@ export default function MentorDashboard({ user, showToast }) {
       return;
     }
 
-    const confirmou = window.confirm(
-      "Deseja realmente excluir esta mensagem?",
-    );
+    const confirmou =
+      window.confirm(
+        "Deseja realmente excluir esta mensagem?",
+      );
 
     if (!confirmou) {
       return;
@@ -471,12 +573,17 @@ export default function MentorDashboard({ user, showToast }) {
         mensagemId,
       );
 
-      setMensagensChat((prev) =>
-        prev.filter(
-          (mensagem) =>
-            Number(mensagem.id) !==
-            Number(mensagemId),
-        ),
+      setMensagensChat(
+        (prev) =>
+          prev.filter(
+            (mensagem) =>
+              Number(
+                mensagem.id,
+              ) !==
+              Number(
+                mensagemId,
+              ),
+          ),
       );
 
       showToast?.(
@@ -539,10 +646,12 @@ export default function MentorDashboard({ user, showToast }) {
           payload,
         );
 
-      setAgendaSlots((prev) => [
-        ...prev,
-        novo,
-      ]);
+      setAgendaSlots(
+        (prev) => [
+          ...prev,
+          novo,
+        ],
+      );
 
       setNovoHorario({
         dataHora: "",
@@ -574,9 +683,10 @@ export default function MentorDashboard({ user, showToast }) {
   async function handleExcluirAgenda(
     id,
   ) {
-    const confirmou = window.confirm(
-      "Deseja realmente excluir este horário?",
-    );
+    const confirmou =
+      window.confirm(
+        "Deseja realmente excluir este horário?",
+      );
 
     if (!confirmou) {
       return;
@@ -587,10 +697,12 @@ export default function MentorDashboard({ user, showToast }) {
 
       await excluirAgendaApi(id);
 
-      setAgendaSlots((prev) =>
-        prev.filter(
-          (item) => item.id !== id,
-        ),
+      setAgendaSlots(
+        (prev) =>
+          prev.filter(
+            (item) =>
+              item.id !== id,
+          ),
       );
 
       showToast?.(
@@ -615,7 +727,9 @@ export default function MentorDashboard({ user, showToast }) {
   // FORMATADORES
   // =========================================================
 
-  function formatarData(data) {
+  function formatarData(
+    data,
+  ) {
     if (!data) {
       return "";
     }
@@ -623,33 +737,67 @@ export default function MentorDashboard({ user, showToast }) {
     const partes =
       data.split("-");
 
-    if (partes.length !== 3) {
+    if (
+      partes.length !== 3
+    ) {
       return data;
     }
 
     return `${partes[2]}/${partes[1]}/${partes[0]}`;
   }
 
-  function formatarValor(valor) {
+  function formatarValor(
+    valor,
+  ) {
     return Number(
       valor || 0,
     ).toFixed(2);
   }
 
-  function formatarHora(data) {
+  function formatarMensagemHora(
+    data,
+  ) {
     if (!data) {
       return "";
     }
 
-    return new Date(
-      data,
-    ).toLocaleTimeString(
+    const dataObj =
+      new Date(data);
+
+    if (
+      Number.isNaN(
+        dataObj.getTime(),
+      )
+    ) {
+      return "";
+    }
+
+    return dataObj.toLocaleTimeString(
       "pt-BR",
       {
         hour: "2-digit",
         minute: "2-digit",
       },
     );
+  }
+
+  function gerarIniciais(
+    nome,
+  ) {
+    if (!nome) {
+      return "?";
+    }
+
+    return nome
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(
+        (parte) =>
+          parte[0],
+      )
+      .join("")
+      .toUpperCase();
   }
 
   // =========================================================
@@ -683,18 +831,20 @@ export default function MentorDashboard({ user, showToast }) {
 
   return (
     <div className="flex flex-col md:flex-row gap-8">
+
       {/* ================================================= */}
       {/* MENU */}
       {/* ================================================= */}
 
       <aside className="w-full md:w-64 flex-shrink-0">
+
         <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+
           <div className="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
             PAINEL MENTOR
           </div>
 
           <nav className="space-y-1">
-            {/* AGENDA */}
 
             <button
               onClick={() => {
@@ -704,10 +854,10 @@ export default function MentorDashboard({ user, showToast }) {
                   "agenda",
                 );
               }}
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
+              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
                 activeTab ===
                 "agenda"
-                  ? "bg-emerald-600 text-white"
+                  ? "bg-emerald-600 text-white shadow-sm shadow-emerald-200"
                   : "text-slate-600 hover:bg-slate-100"
               }`}
             >
@@ -717,8 +867,6 @@ export default function MentorDashboard({ user, showToast }) {
                 Minha Agenda
               </span>
             </button>
-
-            {/* SOLICITAÇÕES */}
 
             <button
               onClick={() => {
@@ -730,10 +878,10 @@ export default function MentorDashboard({ user, showToast }) {
 
                 carregarSolicitacoes();
               }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
                 activeTab ===
                 "solicitacoes"
-                  ? "bg-emerald-600 text-white"
+                  ? "bg-emerald-600 text-white shadow-sm shadow-emerald-200"
                   : "text-slate-600 hover:bg-slate-100"
               }`}
             >
@@ -747,15 +895,13 @@ export default function MentorDashboard({ user, showToast }) {
 
               {pendentes.length >
                 0 && (
-                <span className="bg-red-500 text-white text-[10px] min-w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                <span className="bg-red-500 text-white text-[10px] min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center font-bold shadow-sm">
                   {
                     pendentes.length
                   }
                 </span>
               )}
             </button>
-
-            {/* CHAT */}
 
             <button
               onClick={() => {
@@ -765,27 +911,31 @@ export default function MentorDashboard({ user, showToast }) {
 
                 carregarConversas();
               }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
-                activeTab === "chat"
-                  ? "bg-emerald-600 text-white"
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                activeTab ===
+                "chat"
+                  ? "bg-emerald-600 text-white shadow-sm shadow-emerald-200"
                   : "text-slate-600 hover:bg-slate-100"
               }`}
             >
               <div className="flex items-center space-x-3">
                 <i className="fas fa-comments w-5"></i>
 
-                <span>Chat</span>
+                <span>
+                  Chat
+                </span>
               </div>
 
               {conversasCount >
                 0 && (
-                <span className="bg-white text-emerald-700 text-[10px] min-w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                <span className="bg-white text-emerald-700 text-[10px] min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center font-bold shadow-sm">
                   {
                     conversasCount
                   }
                 </span>
               )}
             </button>
+
           </nav>
         </div>
       </aside>
@@ -794,7 +944,8 @@ export default function MentorDashboard({ user, showToast }) {
       {/* CONTEÚDO */}
       {/* ================================================= */}
 
-      <main className="flex-1">
+      <main className="flex-1 min-w-0">
+
         {/* ================================================= */}
         {/* AGENDA */}
         {/* ================================================= */}
@@ -802,9 +953,9 @@ export default function MentorDashboard({ user, showToast }) {
         {activeTab ===
           "agenda" && (
           <div className="space-y-6">
-            {/* CRIAR HORÁRIO */}
 
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+
               <h2 className="text-xl font-bold text-slate-800 mb-5">
                 Criar novo horário
               </h2>
@@ -815,6 +966,7 @@ export default function MentorDashboard({ user, showToast }) {
                 }
                 className="grid grid-cols-1 md:grid-cols-3 gap-4"
               >
+
                 <div>
                   <label className="block text-sm font-semibold text-slate-600 mb-2">
                     Data e horário
@@ -835,7 +987,7 @@ export default function MentorDashboard({ user, showToast }) {
                         }),
                       )
                     }
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
                   />
                 </div>
 
@@ -862,30 +1014,34 @@ export default function MentorDashboard({ user, showToast }) {
                       )
                     }
                     placeholder="90.00"
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
                   />
                 </div>
 
                 <div className="flex items-end">
+
                   <button
                     type="submit"
                     disabled={
                       criandoHorario
                     }
-                    className="w-full px-4 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 disabled:opacity-50"
+                    className="w-full px-4 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 active:scale-[0.99] transition-all disabled:opacity-50"
                   >
                     {criandoHorario
                       ? "Criando..."
                       : "Criar Horário"}
                   </button>
+
                 </div>
+
               </form>
+
             </div>
 
-            {/* LISTA DA AGENDA */}
-
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+
               <div className="flex justify-between items-center mb-5">
+
                 <h2 className="text-xl font-bold text-slate-800">
                   Minha Agenda
                 </h2>
@@ -898,6 +1054,7 @@ export default function MentorDashboard({ user, showToast }) {
                 >
                   Atualizar
                 </button>
+
               </div>
 
               {loadingAgenda ? (
@@ -911,15 +1068,18 @@ export default function MentorDashboard({ user, showToast }) {
                 </div>
               ) : (
                 <div className="space-y-3">
+
                   {agendaSlots.map(
                     (slot) => (
                       <div
                         key={
                           slot.id
                         }
-                        className="border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+                        className="border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 hover:border-slate-300 transition-colors"
                       >
+
                         <div>
+
                           <h4 className="font-bold text-slate-900">
                             {formatarData(
                               slot.dtMentoria,
@@ -943,9 +1103,11 @@ export default function MentorDashboard({ user, showToast }) {
                               slot.id
                             }
                           </p>
+
                         </div>
 
                         <div className="flex items-center gap-3">
+
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-bold ${
                               slot.situacao ===
@@ -971,7 +1133,7 @@ export default function MentorDashboard({ user, showToast }) {
                                 excluindoId ===
                                 slot.id
                               }
-                              className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-100 disabled:opacity-50"
+                              className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-100 active:scale-95 transition-all disabled:opacity-50"
                             >
                               {excluindoId ===
                               slot.id
@@ -979,13 +1141,18 @@ export default function MentorDashboard({ user, showToast }) {
                                 : "Excluir"}
                             </button>
                           )}
+
                         </div>
+
                       </div>
                     ),
                   )}
+
                 </div>
               )}
+
             </div>
+
           </div>
         )}
 
@@ -996,8 +1163,11 @@ export default function MentorDashboard({ user, showToast }) {
         {activeTab ===
           "solicitacoes" && (
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+
             <div className="flex justify-between items-center mb-5">
+
               <div>
+
                 <h2 className="text-xl font-bold text-slate-800">
                   Solicitações de Chat
                 </h2>
@@ -1005,6 +1175,7 @@ export default function MentorDashboard({ user, showToast }) {
                 <p className="text-sm text-slate-500 mt-1">
                   Clientes que desejam conversar com você.
                 </p>
+
               </div>
 
               <button
@@ -1015,6 +1186,7 @@ export default function MentorDashboard({ user, showToast }) {
               >
                 Atualizar
               </button>
+
             </div>
 
             {loadingSolicitacoes ? (
@@ -1028,38 +1200,28 @@ export default function MentorDashboard({ user, showToast }) {
               </div>
             ) : (
               <div className="space-y-4">
+
                 {pendentes.map(
                   (solicitacao) => (
                     <div
                       key={
                         solicitacao.id
                       }
-                      className="border border-slate-200 rounded-xl p-5"
+                      className="border border-slate-200 rounded-xl p-5 hover:border-slate-300 transition-colors"
                     >
+
                       <div className="flex items-center justify-between gap-4">
+
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-                            {solicitacao.clienteNome
-                              ?.split(
-                                " ",
-                              )
-                              .slice(
-                                0,
-                                2,
-                              )
-                              .map(
-                                (
-                                  parte,
-                                ) =>
-                                  parte[0],
-                              )
-                              .join(
-                                "",
-                              )
-                              .toUpperCase()}
+
+                          <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold shadow-xs">
+                            {gerarIniciais(
+                              solicitacao.clienteNome,
+                            )}
                           </div>
 
                           <div>
+
                             <h3 className="font-bold text-slate-900">
                               {
                                 solicitacao.clienteNome
@@ -1069,22 +1231,26 @@ export default function MentorDashboard({ user, showToast }) {
                             <p className="text-sm text-slate-500">
                               Solicitação de conversa
                             </p>
+
                           </div>
+
                         </div>
 
                         <span className="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">
                           PENDENTE
                         </span>
+
                       </div>
 
                       <div className="flex gap-3 mt-5">
+
                         <button
                           onClick={() =>
                             aceitarSolicitacao(
                               solicitacao,
                             )
                           }
-                          className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700"
+                          className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 active:scale-95 transition-all shadow-xs"
                         >
                           <i className="fas fa-check mr-2"></i>
                           Aceitar
@@ -1096,57 +1262,91 @@ export default function MentorDashboard({ user, showToast }) {
                               solicitacao,
                             )
                           }
-                          className="px-5 py-2.5 bg-red-50 text-red-700 rounded-xl text-sm font-semibold hover:bg-red-100"
+                          className="px-5 py-2.5 bg-red-50 text-red-700 rounded-xl text-sm font-semibold hover:bg-red-100 active:scale-95 transition-all"
                         >
                           <i className="fas fa-times mr-2"></i>
                           Recusar
                         </button>
+
                       </div>
+
                     </div>
                   ),
                 )}
+
               </div>
             )}
+
           </div>
         )}
 
         {/* ================================================= */}
-        {/* CHAT */}
+        {/* CHAT - REDESENHADO COM ANIMAÇÕES */}
         {/* ================================================= */}
 
-        {activeTab === "chat" && (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="flex h-[700px]">
-              {/* LISTA DE CONVERSAS */}
+        {activeTab ===
+          "chat" && (
+          <div className="bg-slate-100 rounded-2xl shadow-lg border border-slate-200 overflow-hidden transition-all">
 
-              <div className="w-80 border-r border-slate-200 flex flex-col">
-                <div className="p-5 border-b border-slate-200">
-                  <h2 className="text-lg font-bold text-slate-800">
+            <div className="flex h-[720px]">
+
+              {/* ================================================= */}
+              {/* LISTA DE CONVERSAS */}
+              {/* ================================================= */}
+
+              <div
+                className={`w-full md:w-80 bg-white border-r border-slate-200 flex flex-col transition-all duration-300 ${
+                  conversaAtual
+                    ? "hidden md:flex"
+                    : "flex"
+                }`}
+              >
+
+                <div className="p-4 border-b border-slate-100 bg-slate-50/70 backdrop-blur-sm">
+
+                  <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i className="fas fa-comments text-emerald-600"></i>
                     Conversas
                   </h2>
 
-                  <p className="text-sm text-slate-500 mt-1">
-                    Converse com seus clientes
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Seus clientes atendidos
                   </p>
+
                 </div>
 
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
+
                   {loadingConversas ? (
-                    <div className="p-6 text-center text-slate-500">
+
+                    <div className="p-6 text-center text-slate-500 text-sm">
                       Carregando conversas...
                     </div>
+
                   ) : conversas.length ===
                     0 ? (
-                    <div className="p-6 text-center text-slate-500">
-                      <i className="fas fa-comments text-3xl mb-3 text-slate-300"></i>
 
-                      <p>
-                        Nenhuma conversa encontrada.
+                    <div className="p-8 text-center text-slate-400">
+
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
+                        <i className="fas fa-comments text-2xl text-slate-300"></i>
+                      </div>
+
+                      <p className="font-semibold text-slate-600">
+                        Nenhuma conversa
                       </p>
+
+                      <p className="text-xs text-slate-400 mt-1">
+                        Suas conversas aparecerão aqui.
+                      </p>
+
                     </div>
+
                   ) : (
+
                     conversas.map(
                       (conversa) => {
+
                         const ativa =
                           Number(
                             conversaAtual,
@@ -1166,110 +1366,143 @@ export default function MentorDashboard({ user, showToast }) {
                                 conversa.id,
                               )
                             }
-                            className={`w-full text-left p-4 border-b border-slate-100 transition ${
+                            className={`w-full text-left px-4 py-3.5 transition-all duration-200 hover:bg-slate-50 ${
                               ativa
-                                ? "bg-blue-50 border-l-4 border-l-blue-600"
-                                : "hover:bg-slate-50"
+                                ? "bg-emerald-50/80 border-l-4 border-emerald-600"
+                                : ""
                             }`}
                           >
+
                             <div className="flex items-center gap-3">
-                              <div className="w-11 h-11 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold flex-shrink-0">
-                                {conversa.clienteNome
-                                  ?.split(
-                                    " ",
-                                  )
-                                  .slice(
-                                    0,
-                                    2,
-                                  )
-                                  .map(
-                                    (
-                                      parte,
-                                    ) =>
-                                      parte[0],
-                                  )
-                                  .join(
-                                    "",
-                                  )
-                                  .toUpperCase()}
+
+                              <div className="relative">
+                                <div className="w-11 h-11 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold flex-shrink-0 shadow-xs">
+                                  {gerarIniciais(
+                                    conversa.clienteNome,
+                                  )}
+                                </div>
+                                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
                               </div>
 
                               <div className="min-w-0 flex-1">
-                                <p className="font-semibold text-slate-800 truncate">
-                                  {
-                                    conversa.clienteNome
-                                  }
+
+                                <div className="flex items-center justify-between gap-1">
+
+                                  <p className="font-semibold text-slate-800 text-sm truncate">
+                                    {
+                                      conversa.clienteNome
+                                    }
+                                  </p>
+
+                                  {ativa && (
+                                    <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+                                  )}
+
+                                </div>
+
+                                <p className="text-xs text-slate-400 truncate mt-0.5 flex items-center gap-1">
+                                  <span>Clique para abrir conversa</span>
                                 </p>
 
-                                <p className="text-xs text-slate-500 mt-1">
-                                  Clique para abrir a conversa
-                                </p>
                               </div>
+
                             </div>
+
                           </button>
                         );
                       },
                     )
+
                   )}
+
                 </div>
+
               </div>
 
+              {/* ================================================= */}
               {/* ÁREA DA CONVERSA */}
+              {/* ================================================= */}
 
-              <div className="flex-1 flex flex-col min-w-0">
+              <div
+                className={`flex-1 min-w-0 flex flex-col bg-[#f0f2f5] ${
+                  conversaAtual
+                    ? "flex"
+                    : "hidden md:flex"
+                }`}
+              >
+
                 {!conversaAtual ? (
-                  <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center text-slate-400">
-                      <i className="fas fa-comments text-5xl mb-4"></i>
 
-                      <h3 className="text-lg font-semibold text-slate-600">
-                        Nenhuma conversa selecionada
+                  <div className="flex-1 flex items-center justify-center bg-slate-50/50">
+
+                    <div className="text-center text-slate-400 p-6 max-w-sm">
+
+                      <div className="w-20 h-20 rounded-3xl bg-emerald-50 shadow-inner mx-auto mb-5 flex items-center justify-center text-emerald-500 animate-bounce duration-1000">
+                        <i className="fas fa-comments text-3xl"></i>
+                      </div>
+
+                      <h3 className="text-lg font-bold text-slate-700">
+                        Atendimento ao Cliente
                       </h3>
 
-                      <p className="text-sm mt-2">
-                        Escolha um cliente ao lado para abrir o chat.
+                      <p className="text-xs mt-2 text-slate-400 leading-relaxed">
+                        Escolha um cliente da lista para responder dúvidas e enviar orientações.
                       </p>
+
                     </div>
+
                   </div>
+
                 ) : (
+
                   <>
+
                     {/* CABEÇALHO */}
 
-                    <div className="p-4 border-b border-slate-200 bg-white flex items-center justify-between">
+                    <div className="h-[68px] flex-shrink-0 px-5 bg-white border-b border-slate-200 flex items-center justify-between shadow-xs z-10">
+
                       <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
-                          {conversaAtualObj?.clienteNome
-                            ?.split(
-                              " ",
-                            )
-                            .slice(
-                              0,
-                              2,
-                            )
-                            .map(
-                              (
-                                parte,
-                              ) =>
-                                parte[0],
-                            )
-                            .join(
-                              "",
-                            )
-                            .toUpperCase()}
+
+                        <button
+                          type="button"
+                          onClick={
+                            fecharConversa
+                          }
+                          className="md:hidden w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors"
+                        >
+                          <i className="fas fa-arrow-left"></i>
+                        </button>
+
+                        <div className="relative">
+                          <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm shadow-xs">
+                            {gerarIniciais(
+                              conversaAtualObj?.clienteNome,
+                            )}
+                          </div>
+                          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
                         </div>
 
                         <div>
-                          <h3 className="font-bold text-slate-800">
+
+                          <h3 className="font-bold text-slate-800 text-sm">
                             {
                               conversaAtualObj?.clienteNome ||
                               "Cliente"
                             }
                           </h3>
 
-                          <p className="text-xs text-green-600">
-                            Conversa ativa
-                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            <span className="text-[11px] text-emerald-600 font-medium">
+                              online agora
+                            </span>
+                          </div>
+
                         </div>
+
                       </div>
 
                       <button
@@ -1277,39 +1510,59 @@ export default function MentorDashboard({ user, showToast }) {
                         onClick={
                           fecharConversa
                         }
-                        className="w-9 h-9 rounded-lg hover:bg-slate-100 text-slate-500"
+                        className="hidden md:flex w-9 h-9 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 items-center justify-center transition-all"
                         title="Fechar conversa"
                       >
                         <i className="fas fa-times"></i>
                       </button>
+
                     </div>
 
                     {/* MENSAGENS */}
 
-                    <div className="flex-1 min-h-0 overflow-y-auto p-6 bg-[#f5f7f9]">
+                    <div className="flex-1 min-h-0 overflow-y-auto px-4 py-6 bg-[#e5ddd5]/30 bg-repeat">
+
                       {loadingChat ? (
-                        <div className="h-full flex items-center justify-center text-slate-500">
-                          Carregando mensagens...
+
+                        <div className="h-full flex items-center justify-center">
+
+                          <div className="bg-white/90 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-sm text-sm text-slate-500 flex items-center gap-3">
+                            <i className="fas fa-circle-notch fa-spin text-emerald-600 text-base"></i>
+                            Carregando mensagens...
+                          </div>
+
                         </div>
+
                       ) : mensagensChat.length ===
                         0 ? (
+
                         <div className="h-full flex items-center justify-center">
-                          <div className="text-center text-slate-400">
-                            <i className="fas fa-comment-dots text-4xl mb-3"></i>
 
-                            <p>
-                              Nenhuma mensagem ainda.
+                          <div className="bg-white/95 rounded-2xl px-6 py-5 text-center shadow-xs border border-slate-100 max-w-xs">
+
+                            <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+                              <i className="fas fa-lock text-sm"></i>
+                            </div>
+
+                            <p className="text-sm font-bold text-slate-700">
+                              Conversa Segura
                             </p>
 
-                            <p className="text-sm mt-1">
-                              Envie a primeira mensagem!
+                            <p className="text-xs text-slate-400 mt-1">
+                              Envie uma mensagem abaixo para iniciar seu atendimento.
                             </p>
+
                           </div>
+
                         </div>
+
                       ) : (
-                        <div className="space-y-4">
+
+                        <div className="max-w-3xl mx-auto space-y-3">
+
                           {mensagensChat.map(
                             (mensagem) => {
+
                               const minhaMensagem =
                                 Number(
                                   mensagem.remetenteId,
@@ -1323,99 +1576,117 @@ export default function MentorDashboard({ user, showToast }) {
                                   key={
                                     mensagem.id
                                   }
-                                  className={`flex ${
+                                  className={`flex w-full ${
                                     minhaMensagem
                                       ? "justify-end"
                                       : "justify-start"
                                   }`}
                                 >
+
                                   <div
-                                    className={`max-w-[70%] px-4 py-3 rounded-2xl ${
+                                    className={`group relative max-w-[82%] md:max-w-[68%] px-4 py-2.5 transition-all duration-200 transform hover:scale-[1.005] ${
                                       minhaMensagem
-                                        ? "bg-blue-600 text-white rounded-br-md"
-                                        : "bg-white text-slate-800 border border-slate-200 rounded-bl-md"
+                                        ? "bg-emerald-600 text-white rounded-2xl rounded-tr-xs shadow-md shadow-emerald-900/10"
+                                        : "bg-white text-slate-800 rounded-2xl rounded-tl-xs border border-slate-100 shadow-sm"
                                     }`}
                                   >
-                                    <div className="flex items-start gap-3">
-                                      <p className="text-sm whitespace-pre-wrap break-words">
+
+                                    <div className="flex flex-col gap-1">
+
+                                      <p className="text-[14px] leading-relaxed whitespace-pre-wrap break-words">
                                         {
                                           mensagem.conteudo
                                         }
                                       </p>
 
-                                      {minhaMensagem && (
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            excluirMensagem(
-                                              mensagem.id,
-                                            )
-                                          }
-                                          className="text-xs opacity-70 hover:opacity-100 flex-shrink-0"
-                                          title="Excluir mensagem"
-                                        >
-                                          <i className="fas fa-trash"></i>
-                                        </button>
-                                      )}
+                                      <div
+                                        className={`flex items-center justify-end gap-1.5 mt-0.5 ${
+                                          minhaMensagem
+                                            ? "text-emerald-100"
+                                            : "text-slate-400"
+                                        }`}
+                                      >
+
+                                        <span className="text-[10px] opacity-80 whitespace-nowrap font-medium">
+                                          {formatarMensagemHora(
+                                            mensagem.dataEnvio,
+                                          )}
+                                        </span>
+
+                                        {minhaMensagem && (
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              excluirMensagem(
+                                                mensagem.id,
+                                              )
+                                            }
+                                            className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-300 text-[11px] ml-1 p-0.5"
+                                            title="Excluir mensagem"
+                                          >
+                                            <i className="fas fa-trash-alt"></i>
+                                          </button>
+                                        )}
+
+                                      </div>
+
                                     </div>
 
-                                    <p
-                                      className={`text-[10px] mt-1 ${
-                                        minhaMensagem
-                                          ? "text-blue-100"
-                                          : "text-slate-400"
-                                      }`}
-                                    >
-                                      {mensagem.dataEnvio
-                                        ? new Date(
-                                            mensagem.dataEnvio,
-                                          ).toLocaleTimeString(
-                                            "pt-BR",
-                                            {
-                                              hour: "2-digit",
-                                              minute:
-                                                "2-digit",
-                                            },
-                                          )
-                                        : ""}
-                                    </p>
                                   </div>
+
                                 </div>
                               );
                             },
                           )}
+
+                          <div
+                            ref={
+                              mensagensEndRef
+                            }
+                          />
+
                         </div>
+
                       )}
+
                     </div>
 
-                    {/* ENVIAR MENSAGEM */}
+                    {/* INPUT DE MENSAGEM */}
 
-                    <div className="p-4 bg-white border-t border-slate-200 flex-shrink-0">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="text"
-                          value={
-                            textoMensagem
-                          }
-                          onChange={(e) =>
-                            setTextoMensagem(
-                              e.target
-                                .value,
-                            )
-                          }
-                          onKeyDown={(e) => {
-                            if (
-                              e.key ===
-                              "Enter"
-                            ) {
-                              e.preventDefault();
+                    <div className="flex-shrink-0 bg-white border-t border-slate-200 px-4 py-3 z-10">
 
-                              enviarMensagemChat();
+                      <div className="max-w-3xl mx-auto flex items-center gap-2">
+
+                        <div className="flex-1 bg-slate-100 rounded-2xl border border-slate-200/80 px-4 py-0.5 flex items-center focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-transparent transition-all">
+
+                          <input
+                            type="text"
+                            value={
+                              textoMensagem
                             }
-                          }}
-                          placeholder="Digite sua mensagem..."
-                          className="flex-1 px-4 py-3 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
+                            onChange={(e) =>
+                              setTextoMensagem(
+                                e.target
+                                  .value,
+                              )
+                            }
+                            onKeyDown={(
+                              e,
+                            ) => {
+                              if (
+                                e.key ===
+                                "Enter"
+                              ) {
+                                e.preventDefault();
+
+                                enviarMensagemChat();
+                              }
+                            }}
+                            placeholder="Digite sua mensagem..."
+                            className="w-full py-2.5 bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-400"
+                          />
+
+                        </div>
 
                         <button
                           type="button"
@@ -1425,22 +1696,27 @@ export default function MentorDashboard({ user, showToast }) {
                           disabled={
                             !textoMensagem.trim()
                           }
-                          className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                          className="w-11 h-11 rounded-full bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-700 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 transition-all shadow-sm shadow-emerald-600/30 flex-shrink-0"
+                          title="Enviar mensagem"
                         >
-                          <i className="fas fa-paper-plane"></i>
+                          <i className="fas fa-paper-plane text-sm"></i>
                         </button>
+
                       </div>
 
-                      <p className="text-xs text-slate-400 mt-2">
-                        Enter para enviar
-                      </p>
                     </div>
+
                   </>
+
                 )}
+
               </div>
+
             </div>
+
           </div>
         )}
+
       </main>
     </div>
   );

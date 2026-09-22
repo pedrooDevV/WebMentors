@@ -811,10 +811,10 @@ export default function ClienteDashboard({
                   null,
                 );
               }}
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
+              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
                 activeTab ===
                 "explorar"
-                  ? "bg-emerald-600 text-white"
+                  ? "bg-emerald-600 text-white shadow-sm shadow-emerald-200"
                   : "text-slate-600 hover:bg-slate-100"
               }`}
             >
@@ -836,10 +836,10 @@ export default function ClienteDashboard({
                   null,
                 );
               }}
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
+              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
                 activeTab ===
                 "agendamentos"
-                  ? "bg-emerald-600 text-white"
+                  ? "bg-emerald-600 text-white shadow-sm shadow-emerald-200"
                   : "text-slate-600 hover:bg-slate-100"
               }`}
             >
@@ -862,10 +862,10 @@ export default function ClienteDashboard({
 
                 carregarSolicitacoesChat();
               }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
                 activeTab ===
                 "chat"
-                  ? "bg-emerald-600 text-white"
+                  ? "bg-emerald-600 text-white shadow-sm shadow-emerald-200"
                   : "text-slate-600 hover:bg-slate-100"
               }`}
             >
@@ -879,7 +879,7 @@ export default function ClienteDashboard({
 
               {chatsAceitos.length >
                 0 && (
-                <span className="bg-white text-emerald-700 text-[10px] min-w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                <span className="bg-white text-emerald-700 text-[10px] min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center font-bold shadow-sm">
                   {
                     chatsAceitos.length
                   }
@@ -923,7 +923,7 @@ export default function ClienteDashboard({
                     e.target.value,
                   )
                 }
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white mb-6 outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white mb-6 outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
               />
 
               {loadingMentores ? (
@@ -944,7 +944,7 @@ export default function ClienteDashboard({
                         key={
                           mentor.id
                         }
-                        className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between"
+                        className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow"
                       >
 
                         <div>
@@ -983,7 +983,7 @@ export default function ClienteDashboard({
                               mentor,
                             )
                           }
-                          className="px-4 py-3 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition"
+                          className="px-4 py-3 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-all active:scale-[0.99]"
                         >
                           Ver Perfil e Agenda
                         </button>
@@ -1012,7 +1012,7 @@ export default function ClienteDashboard({
                     null,
                   )
                 }
-                className="mb-6 text-sm font-semibold text-slate-500 hover:text-slate-800"
+                className="mb-6 text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors"
               >
                 ← Voltar
               </button>
@@ -1055,7 +1055,7 @@ export default function ClienteDashboard({
                       selectedMentor,
                     )
                   }
-                  className="mt-5 px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-semibold hover:bg-indigo-100 transition"
+                  className="mt-5 px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-semibold hover:bg-indigo-100 transition-all active:scale-[0.98]"
                 >
                   <i className="fas fa-comments mr-2"></i>
                   Solicitar conversa prévia
@@ -1096,7 +1096,7 @@ export default function ClienteDashboard({
                               slot,
                             )
                           }
-                          className="p-4 border border-emerald-200 rounded-xl bg-emerald-50 text-emerald-800 text-left hover:bg-emerald-600 hover:text-white transition disabled:opacity-50"
+                          className="p-4 border border-emerald-200 rounded-xl bg-emerald-50 text-emerald-800 text-left hover:bg-emerald-600 hover:text-white transition-all active:scale-[0.98] disabled:opacity-50"
                         >
 
                           <div className="font-bold">
@@ -1172,7 +1172,7 @@ export default function ClienteDashboard({
                       key={
                         agendamento.id
                       }
-                      className="p-5 border rounded-xl flex flex-col md:flex-row md:justify-between md:items-center gap-4"
+                      className="p-5 border rounded-xl flex flex-col md:flex-row md:justify-between md:items-center gap-4 hover:border-slate-300 transition-colors"
                     >
 
                       <div>
@@ -1232,40 +1232,41 @@ export default function ClienteDashboard({
         )}
 
         {/* ================================================= */}
-        {/* CHAT */}
+        {/* CHAT - REDESENHADO COM ANIMAÇÕES */}
         {/* ================================================= */}
 
         {activeTab ===
           "chat" && (
-          <div className="bg-[#efeae2] rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-slate-100 rounded-2xl shadow-lg border border-slate-200 overflow-hidden transition-all">
 
-            <div className="flex h-[700px]">
+            <div className="flex h-[720px]">
 
               {/* ================================================= */}
-              {/* LISTA */}
+              {/* LISTA DE CONVERSAS */}
               {/* ================================================= */}
 
               <div
-                className={`w-full md:w-80 bg-white border-r border-slate-200 flex flex-col ${
+                className={`w-full md:w-80 bg-white border-r border-slate-200 flex flex-col transition-all duration-300 ${
                   conversaAtual
                     ? "hidden md:flex"
                     : "flex"
                 }`}
               >
 
-                <div className="p-5 border-b border-slate-200 bg-white">
+                <div className="p-4 border-b border-slate-100 bg-slate-50/70 backdrop-blur-sm">
 
-                  <h2 className="text-lg font-bold text-slate-800">
+                  <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i className="fas fa-comments text-emerald-600"></i>
                     Conversas
                   </h2>
 
-                  <p className="text-sm text-slate-500 mt-1">
-                    Seus mentores
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Seus mentores disponíveis
                   </p>
 
                 </div>
 
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
 
                   {chatsAceitos.length ===
                   0 ? (
@@ -1275,12 +1276,12 @@ export default function ClienteDashboard({
                         <i className="fas fa-comments text-2xl text-slate-300"></i>
                       </div>
 
-                      <p className="font-medium">
+                      <p className="font-semibold text-slate-600">
                         Nenhuma conversa
                       </p>
 
-                      <p className="text-xs mt-1">
-                        Suas conversas aparecerão aqui.
+                      <p className="text-xs text-slate-400 mt-1">
+                        Solicitações aceitas aparecerão aqui.
                       </p>
 
                     </div>
@@ -1307,39 +1308,42 @@ export default function ClienteDashboard({
                                 solicitacao.conversaId,
                               )
                             }
-                            className={`w-full text-left px-4 py-3 border-b border-slate-100 transition ${
+                            className={`w-full text-left px-4 py-3.5 transition-all duration-200 hover:bg-slate-50 ${
                               ativa
-                                ? "bg-slate-100"
-                                : "hover:bg-slate-50"
+                                ? "bg-emerald-50/80 border-l-4 border-emerald-600"
+                                : ""
                             }`}
                           >
 
                             <div className="flex items-center gap-3">
 
-                              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold flex-shrink-0">
-                                {gerarIniciais(
-                                  solicitacao.mentorNome,
-                                )}
+                              <div className="relative">
+                                <div className="w-11 h-11 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold flex-shrink-0 shadow-xs">
+                                  {gerarIniciais(
+                                    solicitacao.mentorNome,
+                                  )}
+                                </div>
+                                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
                               </div>
 
                               <div className="min-w-0 flex-1">
 
-                                <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center justify-between gap-1">
 
-                                  <p className="font-semibold text-slate-800 truncate">
+                                  <p className="font-semibold text-slate-800 text-sm truncate">
                                     {
                                       solicitacao.mentorNome
                                     }
                                   </p>
 
                                   {ativa && (
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
                                   )}
 
                                 </div>
 
-                                <p className="text-xs text-slate-500 truncate mt-1">
-                                  Clique para conversar
+                                <p className="text-xs text-slate-400 truncate mt-0.5 flex items-center gap-1">
+                                  <span>Clique para conversar</span>
                                 </p>
 
                               </div>
@@ -1357,11 +1361,11 @@ export default function ClienteDashboard({
               </div>
 
               {/* ================================================= */}
-              {/* CONVERSA */}
+              {/* ÁREA DA CONVERSA */}
               {/* ================================================= */}
 
               <div
-                className={`flex-1 min-w-0 flex flex-col ${
+                className={`flex-1 min-w-0 flex flex-col bg-[#f0f2f5] ${
                   conversaAtual
                     ? "flex"
                     : "hidden md:flex"
@@ -1370,20 +1374,20 @@ export default function ClienteDashboard({
 
                 {!conversaAtual ? (
 
-                  <div className="flex-1 flex items-center justify-center bg-[#efeae2]">
+                  <div className="flex-1 flex items-center justify-center bg-slate-50/50">
 
-                    <div className="text-center text-slate-500">
+                    <div className="text-center text-slate-400 p-6 max-w-sm">
 
-                      <div className="w-20 h-20 rounded-full bg-white shadow-sm mx-auto mb-5 flex items-center justify-center">
-                        <i className="fas fa-comments text-3xl text-slate-300"></i>
+                      <div className="w-20 h-20 rounded-3xl bg-emerald-50 shadow-inner mx-auto mb-5 flex items-center justify-center text-emerald-500 animate-bounce duration-1000">
+                        <i className="fas fa-paper-plane text-3xl"></i>
                       </div>
 
-                      <h3 className="text-lg font-semibold text-slate-600">
-                        Seu WhatsApp
+                      <h3 className="text-lg font-bold text-slate-700">
+                        Seu Chat de Mentoria
                       </h3>
 
-                      <p className="text-sm mt-2 text-slate-500">
-                        Escolha uma conversa para começar.
+                      <p className="text-xs mt-2 text-slate-400 leading-relaxed">
+                        Selecione uma conversa ao lado para interagir em tempo real com seu mentor.
                       </p>
 
                     </div>
@@ -1396,7 +1400,7 @@ export default function ClienteDashboard({
 
                     {/* CABEÇALHO */}
 
-                    <div className="h-[72px] flex-shrink-0 px-4 bg-[#f0f2f5] border-b border-slate-200 flex items-center justify-between">
+                    <div className="h-[68px] flex-shrink-0 px-5 bg-white border-b border-slate-200 flex items-center justify-between shadow-xs z-10">
 
                       <div className="flex items-center gap-3">
 
@@ -1405,29 +1409,38 @@ export default function ClienteDashboard({
                           onClick={
                             fecharConversa
                           }
-                          className="md:hidden w-9 h-9 rounded-full hover:bg-slate-200 flex items-center justify-center text-slate-600"
+                          className="md:hidden w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors"
                         >
                           <i className="fas fa-arrow-left"></i>
                         </button>
 
-                        <div className="w-11 h-11 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-                          {gerarIniciais(
-                            solicitacaoAtual?.mentorNome,
-                          )}
+                        <div className="relative">
+                          <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm shadow-xs">
+                            {gerarIniciais(
+                              solicitacaoAtual?.mentorNome,
+                            )}
+                          </div>
+                          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
                         </div>
 
                         <div>
 
-                          <h3 className="font-semibold text-slate-800">
+                          <h3 className="font-bold text-slate-800 text-sm">
                             {
                               solicitacaoAtual?.mentorNome ||
                               "Mentor"
                             }
                           </h3>
 
-                          <p className="text-xs text-emerald-600">
-                            online
-                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            <span className="text-[11px] text-emerald-600 font-medium">
+                              online agora
+                            </span>
+                          </div>
 
                         </div>
 
@@ -1438,7 +1451,7 @@ export default function ClienteDashboard({
                         onClick={
                           fecharConversa
                         }
-                        className="hidden md:flex w-9 h-9 rounded-full hover:bg-slate-200 text-slate-500 items-center justify-center"
+                        className="hidden md:flex w-9 h-9 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 items-center justify-center transition-all"
                         title="Fechar conversa"
                       >
                         <i className="fas fa-times"></i>
@@ -1448,13 +1461,14 @@ export default function ClienteDashboard({
 
                     {/* MENSAGENS */}
 
-                    <div className="flex-1 min-h-0 overflow-y-auto px-4 py-5 bg-[#efeae2]">
+                    <div className="flex-1 min-h-0 overflow-y-auto px-4 py-6 bg-[#e5ddd5]/30 bg-repeat">
 
                       {loadingChat ? (
 
                         <div className="h-full flex items-center justify-center">
 
-                          <div className="bg-white rounded-xl px-5 py-3 shadow-sm text-sm text-slate-500">
+                          <div className="bg-white/90 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-sm text-sm text-slate-500 flex items-center gap-3">
+                            <i className="fas fa-circle-notch fa-spin text-emerald-600 text-base"></i>
                             Carregando mensagens...
                           </div>
 
@@ -1465,16 +1479,18 @@ export default function ClienteDashboard({
 
                         <div className="h-full flex items-center justify-center">
 
-                          <div className="bg-white/90 rounded-xl px-5 py-4 text-center shadow-sm">
+                          <div className="bg-white/95 rounded-2xl px-6 py-5 text-center shadow-xs border border-slate-100 max-w-xs">
 
-                            <i className="fas fa-lock text-slate-300 mb-2"></i>
+                            <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+                              <i className="fas fa-lock text-sm"></i>
+                            </div>
 
-                            <p className="text-sm font-medium text-slate-600">
-                              Nenhuma mensagem ainda.
+                            <p className="text-sm font-bold text-slate-700">
+                              Conversa Segura
                             </p>
 
                             <p className="text-xs text-slate-400 mt-1">
-                              Envie uma mensagem para começar.
+                              Envie uma mensagem abaixo para iniciar seu atendimento.
                             </p>
 
                           </div>
@@ -1483,7 +1499,7 @@ export default function ClienteDashboard({
 
                       ) : (
 
-                        <div className="max-w-4xl mx-auto space-y-2">
+                        <div className="max-w-3xl mx-auto space-y-3">
 
                           {mensagensChat.map(
                             (mensagem) => {
@@ -1509,24 +1525,30 @@ export default function ClienteDashboard({
                                 >
 
                                   <div
-                                    className={`group relative max-w-[80%] md:max-w-[65%] px-3 py-2 shadow-sm ${
+                                    className={`group relative max-w-[82%] md:max-w-[68%] px-4 py-2.5 transition-all duration-200 transform hover:scale-[1.005] ${
                                       minhaMensagem
-                                        ? "bg-[#d9fdd3] rounded-tl-xl rounded-bl-xl rounded-br-md"
-                                        : "bg-white rounded-tr-xl rounded-br-xl rounded-bl-md"
+                                        ? "bg-emerald-600 text-white rounded-2xl rounded-tr-xs shadow-md shadow-emerald-900/10"
+                                        : "bg-white text-slate-800 rounded-2xl rounded-tl-xs border border-slate-100 shadow-sm"
                                     }`}
                                   >
 
-                                    <div className="flex items-end gap-2">
+                                    <div className="flex flex-col gap-1">
 
-                                      <p className="text-[14px] leading-5 text-slate-800 whitespace-pre-wrap break-words">
+                                      <p className="text-[14px] leading-relaxed whitespace-pre-wrap break-words">
                                         {
                                           mensagem.conteudo
                                         }
                                       </p>
 
-                                      <div className="flex items-center gap-1 flex-shrink-0">
+                                      <div
+                                        className={`flex items-center justify-end gap-1.5 mt-0.5 ${
+                                          minhaMensagem
+                                            ? "text-emerald-100"
+                                            : "text-slate-400"
+                                        }`}
+                                      >
 
-                                        <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                                        <span className="text-[10px] opacity-80 whitespace-nowrap font-medium">
                                           {formatarMensagemHora(
                                             mensagem.dataEnvio,
                                           )}
@@ -1540,10 +1562,10 @@ export default function ClienteDashboard({
                                                 mensagem.id,
                                               )
                                             }
-                                            className="opacity-0 group-hover:opacity-100 transition text-slate-400 hover:text-red-500 text-[10px]"
+                                            className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-300 text-[11px] ml-1 p-0.5"
                                             title="Excluir mensagem"
                                           >
-                                            <i className="fas fa-trash"></i>
+                                            <i className="fas fa-trash-alt"></i>
                                           </button>
                                         )}
 
@@ -1570,13 +1592,13 @@ export default function ClienteDashboard({
 
                     </div>
 
-                    {/* INPUT */}
+                    {/* INPUT DE MENSAGEM */}
 
-                    <div className="flex-shrink-0 bg-[#f0f2f5] px-3 py-3">
+                    <div className="flex-shrink-0 bg-white border-t border-slate-200 px-4 py-3 z-10">
 
-                      <div className="max-w-4xl mx-auto flex items-center gap-2">
+                      <div className="max-w-3xl mx-auto flex items-center gap-2">
 
-                        <div className="flex-1 bg-white rounded-2xl border border-slate-200 px-4 py-1 flex items-center">
+                        <div className="flex-1 bg-slate-100 rounded-2xl border border-slate-200/80 px-4 py-0.5 flex items-center focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-transparent transition-all">
 
                           <input
                             type="text"
@@ -1603,8 +1625,8 @@ export default function ClienteDashboard({
                                 enviarMensagemChat();
                               }
                             }}
-                            placeholder="Digite uma mensagem"
-                            className="w-full py-2.5 bg-transparent outline-none text-sm text-slate-700 placeholder:text-slate-400"
+                            placeholder="Digite sua mensagem..."
+                            className="w-full py-2.5 bg-transparent outline-none text-sm text-slate-800 placeholder:text-slate-400"
                           />
 
                         </div>
@@ -1617,7 +1639,8 @@ export default function ClienteDashboard({
                           disabled={
                             !textoMensagem.trim()
                           }
-                          className="w-11 h-11 rounded-full bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition flex-shrink-0"
+                          className="w-11 h-11 rounded-full bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-700 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 transition-all shadow-sm shadow-emerald-600/30 flex-shrink-0"
+                          title="Enviar mensagem"
                         >
                           <i className="fas fa-paper-plane text-sm"></i>
                         </button>
