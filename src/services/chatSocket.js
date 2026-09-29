@@ -1,58 +1,245 @@
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
-const WS_URL = "https://webmentorsback-production.up.railway.app/LeoApi/ws";
+const WS_URL =
+  "https://webmentorsback-production.up.railway.app/LeoApi/ws";
 
 let client = null;
+let connectPromise = null;
+let resolveConnection = null;
 
-export function conectarChat(onSolicitacao) {
+let solicitacaoHandler = null;
+let presenceHandler = null;
 
-  const token = localStorage.getItem("token");
+const conversationHandlers = new Map();
+const conversationSubscriptions = new Map();
 
-  if (!token) {
-    console.error("❌ Token não encontrado");
+const presenceSubscriptionRef = {
+  current: null,
+};
+
+function parseBody(body) {
+  try {
+    return JSON.parse(body);
+  } catch (error) {
+    console.error(
+      "❌ Erro ao interpretar mensagem WebSocket:",
+      error
+    );
+
+    return null;
+  }
+}
+
+function assinarSolicitacoes() {
+  if (!client?.connected) return;
+
+  client.subscribe(
+    "/user/queue/solicitacoes",
+    (message) => {
+      const data = parseBody(message.body);
+
+      if (!data) return;
+
+      console.log(
+        "📩 SOLICITAÇÃO RECEBIDA:",
+        data
+      );
+
+      solicitacaoHandler?.(data);
+    }
+  );
+}
+
+function assinarPresenca() {
+  if (!client?.connected) return;
+
+  if (presenceSubscriptionRef.current) {
     return;
   }
 
-  if (client?.active) {
-    console.log("🟡 WebSocket já está ativo");
+  presenceSubscriptionRef.current =
+    client.subscribe(
+      "/topic/presenca",
+      (message) => {
+        const data = parseBody(message.body);
+
+        if (!data) return;
+
+        console.log(
+          "🟢 ALTERAÇÃO DE PRESENÇA:",
+          data
+        );
+
+        presenceHandler?.(data);
+      }
+    );
+
+  /*
+   * Snapshot inicial da presença.
+   */
+  client.subscribe(
+    "/user/queue/presenca",
+    (message) => {
+      const data = parseBody(message.body);
+
+      if (!data) return;
+
+      console.log(
+        "📡 SNAPSHOT DE PRESENÇA:",
+        data
+      );
+
+      presenceHandler?.({
+        tipo: "SNAPSHOT",
+        usuarios: data,
+      });
+    }
+  );
+
+  /*
+   * Pede ao backend a lista atual
+   * de usuários online.
+   */
+  client.publish({
+    destination: "/app/presenca/atual",
+    body: "{}",
+  });
+}
+
+function assinarConversaInternamente(conversaId) {
+  if (!client?.connected) return;
+
+  const key = String(conversaId);
+
+  if (conversationSubscriptions.has(key)) {
     return;
   }
+
+  const destino =
+    `/topic/chat/${key}`;
+
+  console.log(
+    "🟢 SUBSCREVENDO:",
+    destino
+  );
+
+  const subscription =
+    client.subscribe(
+      destino,
+      (message) => {
+        console.log(
+          "💬 MENSAGEM RECEBIDA:",
+          message.body
+        );
+
+        const data =
+          parseBody(message.body);
+
+        if (!data) return;
+
+        const handler =
+          conversationHandlers.get(key);
+
+        handler?.(data);
+      }
+    );
+
+  conversationSubscriptions.set(
+    key,
+    subscription
+  );
+}
+
+function reassinarTodasConversas() {
+  if (!client?.connected) return;
+
+  console.log(
+    "🔄 REASSINANDO CONVERSAS..."
+  );
+
+  conversationSubscriptions.clear();
+
+  for (
+    const conversaId
+    of conversationHandlers.keys()
+  ) {
+    assinarConversaInternamente(
+      conversaId
+    );
+  }
+}
+
+export function conectarChat(
+  onSolicitacao,
+  onPresence
+) {
+  if (onSolicitacao) {
+    solicitacaoHandler =
+      onSolicitacao;
+  }
+
+  if (onPresence) {
+    presenceHandler =
+      onPresence;
+  }
+
+  if (client?.connected) {
+    return Promise.resolve(client);
+  }
+
+  if (
+    client?.active &&
+    connectPromise
+  ) {
+    return connectPromise;
+  }
+
+  console.log(
+    "🔌 INICIANDO WEBSOCKET..."
+  );
 
   client = new Client({
-
-    webSocketFactory: () => new SockJS(WS_URL),
+    webSocketFactory: () =>
+      new SockJS(WS_URL),
 
     connectHeaders: {
-      Authorization: `Bearer ${token}`
+      Authorization:
+        `Bearer ${localStorage.getItem("token")}`,
     },
 
     reconnectDelay: 5000,
 
+    /*
+     * Heartbeat:
+     * ajuda o servidor a perceber
+     * quando a conexão realmente morreu.
+     */
+    heartbeatIncoming: 10000,
+    heartbeatOutgoing: 10000,
+
     debug: (str) => {
-      console.log("[STOMP]", str);
+      console.log(
+        "[STOMP]",
+        str
+      );
     },
 
     onConnect: () => {
-
-      console.log("🟢 WEBSOCKET CONECTADO");
-
-      // SOLICITAÇÕES
-      client.subscribe(
-        "/user/queue/solicitacoes",
-        (message) => {
-
-          console.log(
-            "📩 SOLICITAÇÃO RECEBIDA:",
-            message.body
-          );
-
-          const data =
-            JSON.parse(message.body);
-
-          onSolicitacao?.(data);
-        }
+      console.log(
+        "🟢 WEBSOCKET CONECTADO"
       );
+
+      assinarSolicitacoes();
+
+      assinarPresenca();
+
+      reassinarTodasConversas();
+
+      if (resolveConnection) {
+        resolveConnection(client);
+        resolveConnection = null;
+      }
     },
 
     onStompError: (frame) => {
@@ -69,67 +256,104 @@ export function conectarChat(onSolicitacao) {
       );
     },
 
+    onWebSocketClose: () => {
+      console.warn(
+        "⚠️ WEBSOCKET FECHADO"
+      );
+
+      conversationSubscriptions.clear();
+
+      presenceSubscriptionRef.current =
+        null;
+    },
+
     onDisconnect: () => {
       console.log(
         "🔴 WEBSOCKET DESCONECTADO"
       );
-    }
+
+      conversationSubscriptions.clear();
+
+      presenceSubscriptionRef.current =
+        null;
+    },
   });
 
+  connectPromise =
+    new Promise((resolve) => {
+      resolveConnection = resolve;
+    });
+
   client.activate();
+
+  return connectPromise;
 }
 
-
-export function entrarNaConversa(
+export async function entrarNaConversa(
   conversaId,
   onMessage
 ) {
-
-  if (!client?.connected) {
-
-    console.error(
-      "❌ WebSocket ainda não conectado"
-    );
-
+  if (
+    conversaId === null ||
+    conversaId === undefined ||
+    !onMessage
+  ) {
     return null;
   }
 
-  const destino =
-    `/topic/chat/${conversaId}`;
+  const key = String(conversaId);
 
-  console.log(
-    "🟢 SUBSCREVENDO:",
-    destino
+  /*
+   * Registra o listener antes mesmo
+   * do socket terminar de conectar.
+   */
+  conversationHandlers.set(
+    key,
+    onMessage
   );
 
-  const subscription =
-    client.subscribe(
-      destino,
-      (message) => {
+  await conectarChat();
 
-        console.log(
-          "💬 MENSAGEM RECEBIDA EM TEMPO REAL:",
-          message.body
+  assinarConversaInternamente(
+    key
+  );
+
+  return {
+    unsubscribe: () => {
+      const handlerAtual =
+        conversationHandlers.get(key);
+
+      if (
+        handlerAtual === onMessage
+      ) {
+        conversationHandlers.delete(
+          key
         );
 
-        const data =
-          JSON.parse(message.body);
+        const subscription =
+          conversationSubscriptions.get(
+            key
+          );
 
-        onMessage?.(data);
+        if (subscription) {
+          subscription.unsubscribe?.();
+
+          conversationSubscriptions.delete(
+            key
+          );
+        }
       }
-    );
-
-  return subscription;
+    },
+  };
 }
 
-
-export function enviarMensagem(
+export async function enviarMensagem(
   conversaId,
   conteudo
 ) {
+  await conectarChat();
 
   if (!client?.connected) {
-
     console.error(
       "❌ WebSocket não conectado"
     );
@@ -137,36 +361,44 @@ export function enviarMensagem(
     return false;
   }
 
-  console.log(
-    "📤 ENVIANDO MENSAGEM",
-    conversaId,
-    conteudo
-  );
-
   client.publish({
-
     destination:
       `/app/chat/${conversaId}`,
 
     body: JSON.stringify({
-      conteudo
-    })
+      conteudo,
+    }),
   });
 
   return true;
 }
 
-
 export function desconectarChat() {
-
-  if (client) {
-
-    console.log(
-      "🔴 DESCONECTANDO WEBSOCKET"
-    );
-
-    client.deactivate();
-
-    client = null;
+  if (!client) {
+    return;
   }
+
+  console.log(
+    "🔴 DESCONECTANDO WEBSOCKET"
+  );
+
+  conversationSubscriptions.forEach(
+    (subscription) => {
+      subscription.unsubscribe?.();
+    }
+  );
+
+  conversationSubscriptions.clear();
+  conversationHandlers.clear();
+
+  presenceSubscriptionRef.current =
+    null;
+
+  client.deactivate();
+
+  client = null;
+  connectPromise = null;
+  resolveConnection = null;
+  solicitacaoHandler = null;
+  presenceHandler = null;
 }

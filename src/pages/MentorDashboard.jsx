@@ -20,6 +20,7 @@ import {
   conectarChat,
   entrarNaConversa,
   enviarMensagem,
+  desconectarChat,
 } from "../services/chatSocket";
 
 export default function MentorDashboard({
@@ -57,9 +58,10 @@ export default function MentorDashboard({
   // REFS
   // =========================================================
 
-  const subscriptionSolicitacaoRef = useRef(null);
-  const subscriptionChatRef = useRef(null);
   const mensagensEndRef = useRef(null);
+  const conversaAtualRef = useRef(null);
+
+  const [usuariosOnline, setUsuariosOnline] = useState(new Set());
 
   // =========================================================
   // HELPER PARA IDENTIFICAR MINHA MENSAGEM (CORRIGIDO)
@@ -157,6 +159,10 @@ export default function MentorDashboard({
     }, 50);
   }, [mensagensChat, conversaAtual]);
 
+  useEffect(() => {
+    conversaAtualRef.current = conversaAtual;
+  }, [conversaAtual]);
+
   // =========================================================
   // AGENDA
   // =========================================================
@@ -183,43 +189,123 @@ export default function MentorDashboard({
   // =========================================================
 
   useEffect(() => {
-    carregarSolicitacoes();
-    carregarConversas();
+    let ativo = true;
 
-    const subscription = conectarChat((solicitacao) => {
-      setSolicitacoes((prev) => {
-        const existe = prev.some(
-          (item) => Number(item.id) === Number(solicitacao.id)
+    async function iniciarWebSocket() {
+      try {
+        await conectarChat(
+          (solicitacao) => {
+            setSolicitacoes((prev) => {
+              const existe = prev.some(
+                (item) => Number(item.id) === Number(solicitacao.id)
+              );
+
+              if (existe) {
+                return prev.map((item) =>
+                  Number(item.id) === Number(solicitacao.id)
+                    ? solicitacao
+                    : item
+                );
+              }
+
+              return [solicitacao, ...prev];
+            });
+
+            if (solicitacao.status === "PENDENTE") {
+              showToast?.(
+                `Nova solicitação de ${solicitacao.clienteNome}`
+              );
+            }
+
+            if (solicitacao.status === "ACEITA") {
+              carregarConversas();
+            }
+          },
+
+          (presenca) => {
+            if (presenca.tipo === "SNAPSHOT") {
+              setUsuariosOnline(
+                new Set(Array.isArray(presenca.usuarios) ? presenca.usuarios : [])
+              );
+              return;
+            }
+
+            if (!presenca.usuario) return;
+
+            setUsuariosOnline((prev) => {
+              const novo = new Set(prev);
+
+              if (presenca.online) {
+                novo.add(presenca.usuario);
+              } else {
+                novo.delete(presenca.usuario);
+              }
+
+              return novo;
+            });
+          }
         );
-        if (existe) {
-          return prev.map((item) =>
-            Number(item.id) === Number(solicitacao.id) ? solicitacao : item
-          );
+
+        if (ativo) {
+          await carregarSolicitacoes();
+          await carregarConversas();
         }
-        return [solicitacao, ...prev];
-      });
-
-      if (solicitacao.status === "PENDENTE") {
-        showToast?.(`Nova solicitação de ${solicitacao.clienteNome}`);
+      } catch (error) {
+        console.error("Erro ao iniciar WebSocket:", error);
       }
-      if (solicitacao.status === "ACEITA") {
-        carregarConversas();
-      }
-    });
+    }
 
-    subscriptionSolicitacaoRef.current = subscription;
+    iniciarWebSocket();
 
     return () => {
-      if (subscriptionSolicitacaoRef.current) {
-        subscriptionSolicitacaoRef.current.unsubscribe?.();
-        subscriptionSolicitacaoRef.current = null;
-      }
-      if (subscriptionChatRef.current) {
-        subscriptionChatRef.current.unsubscribe?.();
-        subscriptionChatRef.current = null;
-      }
+      ativo = false;
+      desconectarChat();
     };
   }, []);
+
+  // =========================================================
+  // RECEBER TODAS AS CONVERSAS EM TEMPO REAL
+  // =========================================================
+
+  useEffect(() => {
+    conversas.forEach((conversa) => {
+      entrarNaConversa(conversa.id, (evento) => {
+        if (evento?.mensagemId) {
+          if (
+            Number(conversaAtualRef.current) ===
+            Number(conversa.id)
+          ) {
+            setMensagensChat((prev) =>
+              prev.filter(
+                (m) => Number(m.id) !== Number(evento.mensagemId)
+              )
+            );
+          }
+
+          return;
+        }
+
+        if (!evento?.id) return;
+
+        if (
+          Number(conversaAtualRef.current) !==
+          Number(conversa.id)
+        ) {
+          return;
+        }
+
+        setMensagensChat((prev) => {
+          const existe = prev.some(
+            (m) => Number(m.id) === Number(evento.id)
+          );
+
+          if (existe) return prev;
+
+          return [...prev, evento];
+        });
+      });
+    });
+  }, [conversas]);
 
   async function carregarSolicitacoes() {
     try {
@@ -291,33 +377,14 @@ export default function MentorDashboard({
       setTextoMensagem("");
       setMensagemRespondendo(null);
 
-      if (subscriptionChatRef.current) {
-        subscriptionChatRef.current.unsubscribe?.();
-        subscriptionChatRef.current = null;
-      }
-
       setConversaAtual(conversaId);
+
       const mensagens = await buscarMensagensApi(conversaId);
-      setMensagensChat(Array.isArray(mensagens) ? mensagens : []);
 
-      const subscription = entrarNaConversa(conversaId, (evento) => {
-        if (evento?.mensagemId) {
-          setMensagensChat((prev) =>
-            prev.filter((m) => Number(m.id) !== Number(evento.mensagemId))
-          );
-          return;
-        }
+      setMensagensChat(
+        Array.isArray(mensagens) ? mensagens : []
+      );
 
-        if (!evento?.id) return;
-
-        setMensagensChat((prev) => {
-          const existe = prev.some((m) => Number(m.id) === Number(evento.id));
-          if (existe) return prev;
-          return [...prev, evento];
-        });
-      });
-
-      subscriptionChatRef.current = subscription;
       setActiveTab("chat");
     } catch (error) {
       console.error("Erro ao abrir conversa:", error);
@@ -329,10 +396,6 @@ export default function MentorDashboard({
   }
 
   function fecharConversa() {
-    if (subscriptionChatRef.current) {
-      subscriptionChatRef.current.unsubscribe?.();
-      subscriptionChatRef.current = null;
-    }
     setConversaAtual(null);
     setMensagensChat([]);
     setTextoMensagem("");
@@ -797,9 +860,23 @@ export default function MentorDashboard({
                               <p className="font-semibold text-slate-800 text-sm truncate">
                                 {c.clienteNome}
                               </p>
-                              <p className="text-xs text-slate-400 truncate mt-0.5">
-                                Clique para abrir
-                              </p>
+                              {(() => {
+                                const online =
+                                  !!c.clienteNome &&
+                                  usuariosOnline.has(c.clienteNome);
+
+                                return (
+                                  <p
+                                    className={`text-xs truncate mt-0.5 ${
+                                      online
+                                        ? "text-emerald-600"
+                                        : "text-slate-400"
+                                    }`}
+                                  >
+                                    {online ? "online agora" : "offline"}
+                                  </p>
+                                );
+                              })()}
                             </div>
                           </div>
                         </button>
@@ -846,10 +923,30 @@ export default function MentorDashboard({
                           <h3 className="font-bold text-slate-800 text-sm">
                             {conversaAtualObj?.clienteNome || "Cliente"}
                           </h3>
-                          <span className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            online agora
-                          </span>
+                          {(() => {
+                            const nome = conversaAtualObj?.clienteNome;
+                            const online =
+                              !!nome && usuariosOnline.has(nome);
+
+                            return (
+                              <span
+                                className={`text-[11px] font-medium flex items-center gap-1 ${
+                                  online
+                                    ? "text-emerald-600"
+                                    : "text-slate-400"
+                                }`}
+                              >
+                                <span
+                                  className={`w-2 h-2 rounded-full ${
+                                    online
+                                      ? "bg-emerald-500 animate-pulse"
+                                      : "bg-slate-400"
+                                  }`}
+                                ></span>
+                                {online ? "online agora" : "offline"}
+                              </span>
+                            );
+                          })()}
                         </div>
                       </div>
                       <button
