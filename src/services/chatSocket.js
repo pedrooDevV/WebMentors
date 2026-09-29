@@ -349,39 +349,45 @@ export async function entrarNaConversa(
 
 export async function enviarMensagem(conversaId, conteudo) {
   try {
-    console.log("📤 Tentando enviar mensagem...");
-    console.log("📌 Conversa:", conversaId);
-    console.log("📌 Conteúdo:", conteudo);
+    console.log("📤 ENVIAR MENSAGEM");
+    console.log("📌 conversaId:", conversaId);
+    console.log("📌 conteudo:", conteudo);
 
     await conectarChat();
 
     if (!client) {
-      console.error("❌ Cliente STOMP não existe");
+      console.error("❌ Cliente STOMP inexistente");
       return false;
     }
 
     if (!client.connected) {
-      console.error("❌ WebSocket não está conectado");
+      console.error("❌ STOMP não conectado");
       return false;
     }
 
-    const destino = `/app/chat/${conversaId}`;
+    const destination = `/app/chat/${conversaId}`;
 
-    console.log("📡 PUBLICANDO:");
-    console.log("Destino:", destino);
-
-    client.publish({
-      destination: destino,
-      body: JSON.stringify({
-        conteudo: conteudo,
-      }),
+    const body = JSON.stringify({
+      conteudo,
     });
 
-    console.log("✅ Mensagem publicada no STOMP");
+    console.log("📡 DESTINO:", destination);
+    console.log("📦 BODY:", body);
+
+    client.publish({
+      destination,
+      body,
+    });
+
+    console.log("✅ STOMP SEND executado");
 
     return true;
   } catch (error) {
-    console.error("❌ ERRO AO ENVIAR MENSAGEM:", error);
+    console.error(
+      "❌ Erro ao publicar mensagem:",
+      error
+    );
+
     return false;
   }
 }
