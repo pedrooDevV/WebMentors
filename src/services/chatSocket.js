@@ -348,43 +348,71 @@ export async function entrarNaConversa(
 }
 
 export async function enviarMensagem(conversaId, conteudo) {
-  try {
-    console.log("📤 ENVIAR MENSAGEM");
-    console.log("📌 conversaId:", conversaId);
-    console.log("📌 conteudo:", conteudo);
+  console.log("================================");
+  console.log("📤 ENVIO DE CHAT");
+  console.log("📌 conversaId:", conversaId);
+  console.log("📌 conteudo:", conteudo);
+  console.log("================================");
 
+  try {
     await conectarChat();
 
     if (!client) {
-      console.error("❌ Cliente STOMP inexistente");
+      console.error("❌ client não existe");
       return false;
     }
 
+    console.log("🔌 client.connected:", client.connected);
+    console.log("🔌 client.active:", client.active);
+
     if (!client.connected) {
-      console.error("❌ STOMP não conectado");
+      console.error(
+        "❌ WebSocket não está conectado no momento do envio"
+      );
+
       return false;
     }
 
     const destination = `/app/chat/${conversaId}`;
 
     const body = JSON.stringify({
-      conteudo,
+      conteudo: String(conteudo),
     });
 
-    console.log("📡 DESTINO:", destination);
-    console.log("📦 BODY:", body);
+    const receiptId =
+      `chat-${conversaId}-${Date.now()}`;
+
+    console.log("📡 ENVIANDO STOMP");
+    console.log("DESTINO:", destination);
+    console.log("BODY:", body);
+    console.log("RECEIPT:", receiptId);
+
+    client.watchForReceipt(
+      receiptId,
+      (frame) => {
+        console.log(
+          "✅ SERVIDOR CONFIRMOU O FRAME:",
+          frame
+        );
+      }
+    );
 
     client.publish({
       destination,
       body,
+      headers: {
+        receipt: receiptId,
+      },
     });
 
-    console.log("✅ STOMP SEND executado");
+    console.log(
+      "✅ client.publish() executado"
+    );
 
     return true;
   } catch (error) {
     console.error(
-      "❌ Erro ao publicar mensagem:",
+      "❌ ERRO AO ENVIAR CHAT:",
       error
     );
 
