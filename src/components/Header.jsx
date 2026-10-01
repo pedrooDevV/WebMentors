@@ -16,8 +16,6 @@ export default function Header({ user, onLogout, isBackendConnected }) {
 
         <div className="flex items-center space-x-4">
           <div className="hidden md:flex items-center space-x-2 text-xs bg-slate-100 px-3 py-1.5 rounded-lg text-slate-600">
-            <span className={`w-2 h-2 rounded-full ${isBackendConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></span>
-            <span>{isBackendConnected ? 'Backend Conectado' : 'Modo Demo / Simulação'}</span>
           </div>
 
           {user && (
