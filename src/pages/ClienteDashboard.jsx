@@ -984,163 +984,100 @@ const [enviandoCase, setEnviandoCase] = useState(false);
           </div>
         )}
 
-        {activeTab === "cases" && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm max-w-3xl mx-auto">
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-slate-800">
-                Criar Novo Case
-              </h2>
-              <p className="text-sm text-slate-500 mt-1">
-                Publique seu problema para encontrar mentores com as
-                especialidades certas.
-              </p>
-            </div>
+       {activeTab === "cases" && (
+  <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm max-w-3xl mx-auto">
+    <div className="mb-6">
+      <h2 className="text-xl font-bold text-slate-800">Criar Novo Case</h2>
+      <p className="text-sm text-slate-500 mt-1">
+        Publique seu problema para encontrar mentores com as especialidades certas.
+      </p>
+    </div>
 
-            <form onSubmit={handleCriarCase} className="space-y-6">
-              {/* Título do Case */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                  Título do Case *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Otimização de Performance em Banco de Dados"
-                  value={novoCase.titulo}
-                  onChange={(e) =>
-                    setNovoCase({ ...novoCase, titulo: e.target.value })
-                  }
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
-                />
-              </div>
+    <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+      {/* Título do Case */}
+      <div>
+        <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+          Título do Case *
+        </label>
+        <input
+          type="text"
+          placeholder="Ex: Otimização de Performance em Banco de Dados"
+          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+        />
+      </div>
 
-              {/* Descrição */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                  Descrição Detalhada *
-                </label>
-                <textarea
-                  rows={5}
-                  required
-                  placeholder="Descreva o problema em detalhes e os objetivos esperados..."
-                  value={novoCase.descricao}
-                  onChange={(e) =>
-                    setNovoCase({ ...novoCase, descricao: e.target.value })
-                  }
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
-                />
-              </div>
+      {/* Descrição */}
+      <div>
+        <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+          Descrição Detalhada *
+        </label>
+        <textarea
+          rows={5}
+          placeholder="Descreva o problema em detalhes e os objetivos esperados..."
+          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+        />
+      </div>
 
-              {/* Valor Estipulado */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                  Valor Estipulado (R$) *
-                </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-2.5 text-slate-400 font-medium text-sm">
-                    R$
-                  </span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    placeholder="0,00"
-                    value={novoCase.valorEstipulado}
-                    onChange={(e) =>
-                      setNovoCase({
-                        ...novoCase,
-                        valorEstipulado: e.target.value,
-                      })
-                    }
-                    className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
-                  />
-                </div>
-              </div>
+      {/* Valor Estipulado */}
+      <div>
+        <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+          Valor Estipulado (R$) *
+        </label>
+        <div className="relative">
+          <span className="absolute left-4 top-2.5 text-slate-400 font-medium text-sm">
+            R$
+          </span>
+          <input
+            type="number"
+            step="0.01"
+            placeholder="0,00"
+            className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+          />
+        </div>
+      </div>
 
-              {/* Especialidades Necessárias */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                  Especialidades que podem ajudar *
-                </label>
+      {/* Especialidades Necessárias */}
+      <div>
+        <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+          Especialidades que podem ajudar *
+        </label>
 
-                <div className="flex gap-2 mb-3">
-                  <input
-                    type="text"
-                    placeholder="Ex: React, Postgres, DevOps..."
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        adicionarEspecialidade();
-                      }
-                    }}
-                    className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={adicionarEspecialidade}
-                    className="px-4 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-slate-900 transition-all"
-                  >
-                    Adicionar
-                  </button>
-                </div>
+        <div className="flex gap-2 mb-3">
+          <input
+            type="text"
+            placeholder="Ex: React, Postgres, DevOps..."
+            className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+          />
+          <button
+            type="button"
+            className="px-4 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-slate-900 transition-all"
+          >
+            Adicionar
+          </button>
+        </div>
+      </div>
 
-                {/* Tags de Especialidades Adicionadas */}
-                <div className="flex flex-wrap gap-2 min-h-[36px]">
-                  {novoCase.especialidades.length === 0 ? (
-                    <span className="text-xs text-slate-400 italic">
-                      Nenhuma especialidade adicionada ainda.
-                    </span>
-                  ) : (
-                    novoCase.especialidades.map((tag, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold"
-                      >
-                        {tag}
-                        <button
-                          type="button"
-                          onClick={() => removerEspecialidade(tag)}
-                          className="hover:text-red-600 focus:outline-none ml-0.5"
-                        >
-                          <i className="fas fa-times text-[10px]"></i>
-                        </button>
-                      </span>
-                    ))
-                  )}
-                </div>
-              </div>
+      {/* Botões de Ação */}
+      <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+        <button
+          type="button"
+          onClick={() => setActiveTab("explorar")}
+          className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all"
+        >
+          Cancelar
+        </button>
 
-              {/* Botões de Ação */}
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("explorar")}
-                  className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all"
-                >
-                  Cancelar
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={enviandoCase}
-                  className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-all disabled:opacity-50 flex items-center gap-2"
-                >
-                  {enviandoCase ? (
-                    <span>Salvando...</span>
-                  ) : (
-                    <>
-                      <i className="fas fa-check"></i>
-                      <span>Publicar Case</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
+        <button
+          type="submit"
+          className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-all flex items-center gap-2"
+        >
+          <i className="fas fa-check"></i>
+          <span>Publicar Case</span>
+        </button>
+      </div>
+    </form>
+  </div>
+)}
 
         {activeTab === "chat" && (
           <div className="bg-slate-100 rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
