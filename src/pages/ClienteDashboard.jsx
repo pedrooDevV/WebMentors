@@ -43,6 +43,14 @@ export default function ClienteDashboard({ user, showToast }) {
   const conversaAtualRef = useRef(null);
 
   const [usuariosOnline, setUsuariosOnline] = useState(new Set());
+  const [novoCase, setNovoCase] = useState({
+  titulo: "",
+  descricao: "",
+  valorEstipulado: "",
+  especialidades: [] // IMPORTANTE: precisa começar como array vazio
+});
+const [tagInput, setTagInput] = useState("");
+const [enviandoCase, setEnviandoCase] = useState(false);
 
   function obterIdUsuario(obj) {
     if (!obj) return null;
