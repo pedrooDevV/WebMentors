@@ -1,4 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/LeoApi";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+// Garante que o /LeoApi está no final da URL base
+const API_URL = BASE_URL.endsWith("/LeoApi") ? BASE_URL : `${BASE_URL.replace(/\/$/, "")}/LeoApi`;
 
 function getToken() {
   return localStorage.getItem("token");
