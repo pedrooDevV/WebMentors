@@ -9,18 +9,19 @@ export default function Header({ user, onLogout, isBackendConnected }) {
             <i className="fas fa-graduation-cap text-lg"></i>
           </div>
           <div>
-            <span className="text-xl font-bold text-slate-800 tracking-tight">Mentoria<span className="text-emerald-600">.web</span></span>
-            <span className="hidden sm:inline-block ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">LeoApi</span>
+            <span className="text-xl font-bold text-slate-800 tracking-tight">
+              Mentoria<span className="text-emerald-600">.web</span>
+            </span>
+            <span className="hidden sm:inline-block ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+              LeoApi
+            </span>
           </div>
         </div>
 
         <div className="flex items-center space-x-4">
           <div className="hidden md:flex items-center space-x-2 text-xs bg-slate-100 px-3 py-1.5 rounded-lg text-slate-600">
-<<<<<<< HEAD
             <span className={`w-2 h-2 rounded-full ${isBackendConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></span>
             <span>{isBackendConnected ? 'Backend Conectado' : 'Modo Demo / Simulação'}</span>
-=======
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
           </div>
 
           {user && (
