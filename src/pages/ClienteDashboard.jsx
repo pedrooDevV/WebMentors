@@ -9,13 +9,15 @@ import {
   buscarMinhasSolicitacoesChatApi,
   buscarMensagensApi,
   excluirMensagemApi,
+  criarCaseApi,
+  buscarMeusCasesApi,
 } from "../services/api";
 
 import {
   conectarChat,
   entrarNaConversa,
   enviarMensagem,
-<<<<<<< HEAD
+  desconectarChat,
 } from "../services/chatSocket";
 
 export default function ClienteDashboard({ user, showToast }) {
@@ -23,121 +25,6 @@ export default function ClienteDashboard({ user, showToast }) {
   // ESTADOS
   // =========================================================
 
-  const [activeTab, setActiveTab] = useState("explorar");
-
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const [mentores, setMentores] = useState([]);
-
-  const [selectedMentor, setSelectedMentor] = useState(null);
-
-  const [agendaSlots, setAgendaSlots] = useState([]);
-
-  const [agendamentos, setAgendamentos] = useState([]);
-
-  const [chatSolicitacoes, setChatSolicitacoes] = useState([]);
-
-  const [conversaAtual, setConversaAtual] = useState(null);
-
-  const [mensagensChat, setMensagensChat] = useState([]);
-
-  const [textoMensagem, setTextoMensagem] = useState("");
-
-  const [loadingMentores, setLoadingMentores] = useState(false);
-
-  const [loadingAgenda, setLoadingAgenda] = useState(false);
-
-  const [loadingAgendamentos, setLoadingAgendamentos] = useState(false);
-
-  const [loadingChat, setLoadingChat] = useState(false);
-
-  const [agendandoId, setAgendandoId] = useState(null);
-
-  const [erro, setErro] = useState("");
-
-  const subscriptionChatRef = useRef(null);
-
-  // Estados para o formulário de criar case
-  const [novoCase, setNovoCase] = useState({
-    titulo: "",
-    descricao: "",
-    valorEstipulado: "",
-    especialidades: [],
-  });
-  const [inputEspecialidade, setInputEspecialidade] = useState("");
-  const [meusCases, setMeusCases] = useState([]);
-  const [loadingCases, setLoadingCases] = useState(false);
-
-  // Efeito para carregar os cases do cliente quando abrir a aba
-  useEffect(() => {
-    if (activeTab === "meus-cases") {
-      carregarMeusCases();
-    }
-  }, [activeTab]);
-
-  async function carregarMeusCases() {
-    try {
-      setLoadingCases(true);
-      const data = await buscarMeusCasesApi();
-      setMeusCases(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoadingCases(false);
-    }
-  }
-
-  function adicionarEspecialidade() {
-    const item = inputEspecialidade.trim();
-    if (!item) return;
-    if (!novoCase.especialidades.includes(item)) {
-      setNovoCase((prev) => ({
-        ...prev,
-        especialidades: [...prev.especialidades, item],
-      }));
-    }
-    setInputEspecialidade("");
-  }
-
-  function removerEspecialidade(item) {
-    setNovoCase((prev) => ({
-      ...prev,
-      especialidades: prev.especialidades.filter((e) => e !== item),
-    }));
-  }
-
-  async function handleCriarCase(e) {
-    e.preventDefault();
-    try {
-      const payload = {
-        titulo: novoCase.titulo,
-        descricao: novoCase.descricao,
-        valorEstipulado: Number(novoCase.valorEstipulado || 0),
-        especialidades: novoCase.especialidades,
-      };
-
-      await criarCaseApi(payload);
-      showToast?.("Case publicado com sucesso!");
-      setNovoCase({
-        titulo: "",
-        descricao: "",
-        valorEstipulado: "",
-        especialidades: [],
-      });
-      carregarMeusCases();
-    } catch (err) {
-      showToast?.(err.message || "Erro ao publicar case");
-    }
-  }
-
-  // =========================================================
-  // MENTORES
-  // =========================================================
-=======
-  desconectarChat,
-} from "../services/chatSocket";
-
-export default function ClienteDashboard({ user, showToast }) {
   const [activeTab, setActiveTab] = useState("explorar");
   const [searchQuery, setSearchQuery] = useState("");
   const [mentores, setMentores] = useState([]);
@@ -161,15 +48,20 @@ export default function ClienteDashboard({ user, showToast }) {
   const mensagensEndRef = useRef(null);
   const conversaAtualRef = useRef(null);
 
-  const [usuariosOnline, setUsuariosOnline] = useState(new Set());
+  // Estados dos Cases
+  const [meusCases, setMeusCases] = useState([]);
+  const [loadingCases, setLoadingCases] = useState(false);
   const [novoCase, setNovoCase] = useState({
-  titulo: "",
-  descricao: "",
-  valorEstipulado: "",
-  especialidades: [] // IMPORTANTE: precisa começar como array vazio
-});
-const [tagInput, setTagInput] = useState("");
-const [enviandoCase, setEnviandoCase] = useState(false);
+    titulo: "",
+    descricao: "",
+    valorEstipulado: "",
+    especialidades: [],
+  });
+  const [inputEspecialidade, setInputEspecialidade] = useState("");
+
+  // =========================================================
+  // AUXILIARES DE USUÁRIO E MENSAGEM
+  // =========================================================
 
   function obterIdUsuario(obj) {
     if (!obj) return null;
@@ -264,22 +156,74 @@ const [enviandoCase, setEnviandoCase] = useState(false);
     return false;
   }
 
-  useEffect(() => {
-    if (!conversaAtual) return;
+  // =========================================================
+  // CASES
+  // =========================================================
 
-    const timer = setTimeout(() => {
-      mensagensEndRef.current?.scrollIntoView({
-        behavior: "smooth",
+  useEffect(() => {
+    if (activeTab === "cases") {
+      carregarMeusCases();
+    }
+  }, [activeTab]);
+
+  async function carregarMeusCases() {
+    try {
+      setLoadingCases(true);
+      const data = await buscarMeusCasesApi();
+      setMeusCases(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Erro ao carregar cases:", error);
+    } finally {
+      setLoadingCases(false);
+    }
+  }
+
+  function adicionarEspecialidade() {
+    const item = inputEspecialidade.trim();
+    if (!item) return;
+    if (!novoCase.especialidades.includes(item)) {
+      setNovoCase((prev) => ({
+        ...prev,
+        especialidades: [...prev.especialidades, item],
+      }));
+    }
+    setInputEspecialidade("");
+  }
+
+  function removerEspecialidade(item) {
+    setNovoCase((prev) => ({
+      ...prev,
+      especialidades: prev.especialidades.filter((e) => e !== item),
+    }));
+  }
+
+  async function handleCriarCase(e) {
+    e.preventDefault();
+    try {
+      const payload = {
+        titulo: novoCase.titulo,
+        descricao: novoCase.descricao,
+        valorEstipulado: Number(novoCase.valorEstipulado || 0),
+        especialidades: novoCase.especialidades,
+      };
+
+      await criarCaseApi(payload);
+      showToast?.("Case publicado com sucesso!");
+      setNovoCase({
+        titulo: "",
+        descricao: "",
+        valorEstipulado: "",
+        especialidades: [],
       });
-    }, 50);
+      carregarMeusCases();
+    } catch (err) {
+      showToast?.(err.message || "Erro ao publicar case");
+    }
+  }
 
-    return () => clearTimeout(timer);
-  }, [mensagensChat, conversaAtual]);
-
-  useEffect(() => {
-    conversaAtualRef.current = conversaAtual;
-  }, [conversaAtual]);
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
+  // =========================================================
+  // MENTORES
+  // =========================================================
 
   useEffect(() => {
     carregarMentores();
@@ -295,125 +239,50 @@ const [enviandoCase, setEnviandoCase] = useState(false);
       setMentores(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Erro ao buscar mentores:", error);
-
       setErro(error.message || "Erro ao carregar mentores");
     } finally {
       setLoadingMentores(false);
     }
   }
 
-<<<<<<< HEAD
   // =========================================================
-  // WEBSOCKET
+  // WEBSOCKET & SOLICITAÇÕES
   // =========================================================
 
-  useEffect(() => {
-    carregarSolicitacoesChat();
-
-    conectarChat((solicitacao) => {
-      console.log("📩 SOLICITAÇÃO RECEBIDA:", solicitacao);
-
-      setChatSolicitacoes((prev) => {
-        const existe = prev.some((item) => item.id === solicitacao.id);
-
-        if (existe) {
-          return prev.map((item) =>
-            item.id === solicitacao.id ? solicitacao : item,
-          );
-        }
-
-        return [solicitacao, ...prev];
-      });
-
-      if (solicitacao.status === "ACEITA") {
-        showToast?.(
-          `O mentor ${solicitacao.mentorNome} aceitou sua solicitação!`,
-        );
-      }
-
-      if (solicitacao.status === "RECUSADA") {
-        showToast?.(
-          `O mentor ${solicitacao.mentorNome} recusou sua solicitação.`,
-        );
-      }
-    });
-
-    return () => {
-      if (subscriptionChatRef.current) {
-        subscriptionChatRef.current.unsubscribe();
-        subscriptionChatRef.current = null;
-      }
-    };
-  }, []);
-
-  // =========================================================
-  // SOLICITAÇÕES
-  // =========================================================
-=======
   useEffect(() => {
     let ativo = true;
 
     async function iniciarWebSocket() {
       try {
-        await conectarChat(
-          (solicitacao) => {
-            setChatSolicitacoes((prev) => {
-              const existe = prev.some(
-                (item) => Number(item.id) === Number(solicitacao.id),
-              );
+        await conectarChat((solicitacao) => {
+          setChatSolicitacoes((prev) => {
+            const existe = prev.some(
+              (item) => Number(item.id) === Number(solicitacao.id),
+            );
 
-              if (existe) {
-                return prev.map((item) =>
-                  Number(item.id) === Number(solicitacao.id)
-                    ? solicitacao
-                    : item,
-                );
-              }
-
-              return [solicitacao, ...prev];
-            });
-
-            if (solicitacao.status === "ACEITA") {
-              showToast?.(
-                `O mentor ${solicitacao.mentorNome} aceitou sua solicitação!`,
+            if (existe) {
+              return prev.map((item) =>
+                Number(item.id) === Number(solicitacao.id)
+                  ? solicitacao
+                  : item,
               );
             }
 
-            if (solicitacao.status === "RECUSADA") {
-              showToast?.(
-                `O mentor ${solicitacao.mentorNome} recusou sua solicitação.`,
-              );
-            }
-          },
+            return [solicitacao, ...prev];
+          });
 
-          (presenca) => {
-            if (presenca.tipo === "SNAPSHOT") {
-              setUsuariosOnline(
-                new Set(
-                  Array.isArray(presenca.usuarios) ? presenca.usuarios : [],
-                ),
-              );
+          if (solicitacao.status === "ACEITA") {
+            showToast?.(
+              `O mentor ${solicitacao.mentorNome} aceitou sua solicitação!`,
+            );
+          }
 
-              return;
-            }
-
-            if (!presenca.usuario) {
-              return;
-            }
-
-            setUsuariosOnline((prev) => {
-              const novo = new Set(prev);
-
-              if (presenca.online) {
-                novo.add(presenca.usuario);
-              } else {
-                novo.delete(presenca.usuario);
-              }
-
-              return novo;
-            });
-          },
-        );
+          if (solicitacao.status === "RECUSADA") {
+            showToast?.(
+              `O mentor ${solicitacao.mentorNome} recusou sua solicitação.`,
+            );
+          }
+        });
 
         if (ativo) {
           await carregarSolicitacoesChat();
@@ -432,6 +301,22 @@ const [enviandoCase, setEnviandoCase] = useState(false);
   }, []);
 
   useEffect(() => {
+    conversaAtualRef.current = conversaAtual;
+  }, [conversaAtual]);
+
+  useEffect(() => {
+    if (!conversaAtual) return;
+
+    const timer = setTimeout(() => {
+      mensagensEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+      });
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [mensagensChat, conversaAtual]);
+
+  useEffect(() => {
     const conversasAceitas = chatSolicitacoes.filter(
       (item) => item.status === "ACEITA" && item.conversaId,
     );
@@ -446,13 +331,10 @@ const [enviandoCase, setEnviandoCase] = useState(false);
               prev.filter((m) => Number(m.id) !== Number(evento.mensagemId)),
             );
           }
-
           return;
         }
 
-        if (!evento?.id) {
-          return;
-        }
+        if (!evento?.id) return;
 
         if (Number(conversaAtualRef.current) !== Number(conversa.conversaId)) {
           return;
@@ -460,147 +342,59 @@ const [enviandoCase, setEnviandoCase] = useState(false);
 
         setMensagensChat((prev) => {
           const existe = prev.some((m) => Number(m.id) === Number(evento.id));
-
-          if (existe) {
-            return prev;
-          }
-
+          if (existe) return prev;
           return [...prev, evento];
         });
       });
     });
   }, [chatSolicitacoes]);
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
 
   async function carregarSolicitacoesChat() {
     try {
       const data = await buscarMinhasSolicitacoesChatApi();
-
       setChatSolicitacoes(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Erro ao carregar solicitações:", error);
     }
   }
 
-<<<<<<< HEAD
-  async function solicitarChat(mentor) {
-    try {
-      await solicitarChatApi(mentor.id);
-
-      showToast?.("Solicitação enviada ao mentor!");
-
-      await carregarSolicitacoesChat();
-=======
-  /*
-
-* =========================================================
-* ENCONTRAR SOLICITAÇÃO DO CLIENTE PARA UM MENTOR
-* =========================================================
-  */
   function obterSolicitacaoDoMentor(mentorId) {
     return chatSolicitacoes.find(
       (item) => Number(item.mentorId) === Number(mentorId),
     );
   }
 
-  /*
-
-* =========================================================
-* VERIFICAR SE PODE SOLICITAR CHAT
-* =========================================================
-*
-* Pode solicitar quando:
-*
-* * não existe solicitação
-* * solicitação está RECUSADA
-*
-* Não pode quando:
-*
-* * PENDENTE
-* * ACEITA
-*
-
-*/
   function podeSolicitarChat(mentorId) {
     const solicitacao = obterSolicitacaoDoMentor(mentorId);
-
-    if (!solicitacao) {
-      return true;
-    }
-
-    if (solicitacao.status === "RECUSADA") {
-      return true;
-    }
-
+    if (!solicitacao) return true;
+    if (solicitacao.status === "RECUSADA") return true;
     return false;
   }
 
-  /*
-
-* =========================================================
-* TEXTO DO BOTÃO DE SOLICITAÇÃO
-* =========================================================
-  */
   function textoBotaoChat(mentorId) {
     const solicitacao = obterSolicitacaoDoMentor(mentorId);
-
-    if (!solicitacao) {
-      return "Solicitar conversa prévia";
-    }
-
-    if (solicitacao.status === "PENDENTE") {
-      return "Solicitação pendente";
-    }
-
-    if (solicitacao.status === "ACEITA") {
-      return "Conversa já aceita";
-    }
-
-    if (solicitacao.status === "RECUSADA") {
-      return "Solicitar novamente";
-    }
-
+    if (!solicitacao) return "Solicitar conversa prévia";
+    if (solicitacao.status === "PENDENTE") return "Solicitação pendente";
+    if (solicitacao.status === "ACEITA") return "Conversa já aceita";
+    if (solicitacao.status === "RECUSADA") return "Solicitar novamente";
     return "Solicitar conversa prévia";
   }
 
-  /*
-
-* =========================================================
-* SOLICITAR CHAT
-* =========================================================
-  */
   async function solicitarChat(mentor) {
     const solicitacao = obterSolicitacaoDoMentor(mentor.id);
 
-    /*
-
-
-
- * Segurança adicional no frontend.
- *
- * PENDENTE e ACEITA não podem
- * gerar uma nova solicitação.
- */
     if (solicitacao && solicitacao.status !== "RECUSADA") {
       if (solicitacao.status === "PENDENTE") {
-        showToast?.(
-          "Você já possui uma solicitação pendente para esse mentor.",
-        );
+        showToast?.("Você já possui uma solicitação pendente para esse mentor.");
       }
-
       if (solicitacao.status === "ACEITA") {
         showToast?.("Você já possui uma conversa com esse mentor.");
       }
-
       return;
     }
 
     try {
       await solicitarChatApi(mentor.id);
-
-      /*
-       * Atualiza imediatamente a lista.
-       */
       await carregarSolicitacoesChat();
 
       if (solicitacao?.status === "RECUSADA") {
@@ -608,105 +402,64 @@ const [enviandoCase, setEnviandoCase] = useState(false);
       } else {
         showToast?.("Solicitação enviada ao mentor!");
       }
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
     } catch (error) {
       console.error("Erro ao solicitar chat:", error);
-
       showToast?.(error.message || "Erro ao enviar solicitação");
     }
   }
 
-<<<<<<< HEAD
-  // =========================================================
-  // ABRIR MENTOR
-  // =========================================================
-
-=======
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
   async function abrirMentor(mentor) {
     try {
       setSelectedMentor(mentor);
-
       setAgendaSlots([]);
-
       setLoadingAgenda(true);
-
       setErro("");
 
       const agenda = await buscarAgendaMentorApi(mentor.id);
-
       setAgendaSlots(Array.isArray(agenda) ? agenda : []);
     } catch (error) {
       console.error("Erro ao buscar agenda:", error);
-
       setErro(error.message || "Erro ao carregar agenda");
     } finally {
       setLoadingAgenda(false);
     }
   }
 
-<<<<<<< HEAD
   // =========================================================
-  // AGENDAR
+  // AGENDAMENTOS
   // =========================================================
 
-=======
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
   async function agendarHorario(slot) {
     const confirmou = window.confirm(
       `Deseja agendar ${formatarData(slot.dtMentoria)} às ${slot.hrMentoria}?`,
     );
 
-<<<<<<< HEAD
-    if (!confirmou) {
-      return;
-    }
-=======
     if (!confirmou) return;
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
 
     try {
       setAgendandoId(slot.id);
-
       const novoAgendamento = await agendarHorarioApi(slot.id);
-
       setAgendaSlots((prev) => prev.filter((item) => item.id !== slot.id));
-
       setAgendamentos((prev) => [...prev, novoAgendamento]);
-
       showToast?.("Agendamento realizado com sucesso!");
-
       setActiveTab("agendamentos");
-
       await carregarMeusAgendamentos();
     } catch (error) {
       console.error("Erro ao agendar:", error);
-
       showToast?.(error.message || "Erro ao realizar agendamento");
     } finally {
       setAgendandoId(null);
     }
   }
 
-<<<<<<< HEAD
-  // =========================================================
-  // AGENDAMENTOS
-  // =========================================================
-
-=======
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
   async function carregarMeusAgendamentos() {
     try {
       setLoadingAgendamentos(true);
-
       setErro("");
-
       const data = await buscarMeusAgendamentosApi();
-
       setAgendamentos(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Erro ao buscar agendamentos:", error);
-
       setErro(error.message || "Erro ao carregar agendamentos");
     } finally {
       setLoadingAgendamentos(false);
@@ -719,81 +472,24 @@ const [enviandoCase, setEnviandoCase] = useState(false);
     }
   }, [activeTab]);
 
-<<<<<<< HEAD
   // =========================================================
   // CHAT
   // =========================================================
 
-=======
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
   async function abrirConversa(conversaId) {
     try {
       setLoadingChat(true);
-
       setTextoMensagem("");
-
-<<<<<<< HEAD
-      /*
-       * Primeiro muda a conversa atual.
-       * Isso garante que o campo de mensagem
-       * pertence à conversa clicada.
-       */
-=======
       setMensagemRespondendo(null);
-
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
       setConversaAtual(conversaId);
 
       const mensagens = await buscarMensagensApi(conversaId);
-
       setMensagensChat(Array.isArray(mensagens) ? mensagens : []);
 
-<<<<<<< HEAD
-      if (subscriptionChatRef.current) {
-        subscriptionChatRef.current.unsubscribe();
-        subscriptionChatRef.current = null;
-      }
-
-      const subscription = entrarNaConversa(conversaId, (evento) => {
-        /*
-         * Evento de exclusão.
-         */
-        if (evento?.mensagemId) {
-          setMensagensChat((prev) =>
-            prev.filter(
-              (mensagem) => Number(mensagem.id) !== Number(evento.mensagemId),
-            ),
-          );
-
-          return;
-        }
-
-        /*
-         * Mensagem nova.
-         */
-        setMensagensChat((prev) => {
-          const existe = prev.some(
-            (mensagem) => Number(mensagem.id) === Number(evento.id),
-          );
-
-          if (existe) {
-            return prev;
-          }
-
-          return [...prev, evento];
-        });
-      });
-
-      subscriptionChatRef.current = subscription;
-
-=======
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
       setActiveTab("chat");
     } catch (error) {
       console.error("Erro ao abrir conversa:", error);
-
       showToast?.(error.message || "Erro ao abrir conversa");
-
       setConversaAtual(null);
     } finally {
       setLoadingChat(false);
@@ -801,26 +497,6 @@ const [enviandoCase, setEnviandoCase] = useState(false);
   }
 
   function fecharConversa() {
-<<<<<<< HEAD
-    if (subscriptionChatRef.current) {
-      subscriptionChatRef.current.unsubscribe();
-
-      subscriptionChatRef.current = null;
-    }
-
-    setConversaAtual(null);
-
-    setMensagensChat([]);
-
-    setTextoMensagem("");
-  }
-
-  // =========================================================
-  // ENVIAR MENSAGEM
-  // =========================================================
-
-  function enviarMensagemChat() {
-=======
     setConversaAtual(null);
     setMensagensChat([]);
     setTextoMensagem("");
@@ -830,37 +506,13 @@ const [enviandoCase, setEnviandoCase] = useState(false);
   async function enviarMensagemChat(event) {
     event?.preventDefault();
 
-    if (enviandoMensagem) {
-      return;
-    }
+    if (enviandoMensagem) return;
 
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
     const texto = textoMensagem.trim();
+    if (!texto) return;
 
-    if (!texto) {
-      return;
-    }
-
-<<<<<<< HEAD
-    if (!conversaAtual) {
-      return;
-    }
-
-    enviarMensagem(conversaAtual, texto);
-
-    setTextoMensagem("");
-  }
-
-  // =========================================================
-  // EXCLUIR MENSAGEM
-  // =========================================================
-
-=======
     if (conversaAtual === null || conversaAtual === undefined) {
-      console.error("❌ Nenhuma conversa selecionada");
-
       showToast?.("Selecione uma conversa.");
-
       return;
     }
 
@@ -871,88 +523,53 @@ const [enviandoCase, setEnviandoCase] = useState(false);
         /\n/g,
         " ",
       );
-
       textoFinal = `» ${mensagemRespondendo.autor}: ${conteudoLimpo}\n${texto}`;
     }
 
     try {
       setEnviandoMensagem(true);
-
-      console.log("📤 CLIENTE ENVIANDO MENSAGEM", {
-        conversaId: conversaAtual,
-        conteudo: textoFinal,
-      });
-
       const sucesso = await enviarMensagem(conversaAtual, textoFinal);
 
       if (!sucesso) {
         throw new Error("O WebSocket não conseguiu publicar a mensagem.");
       }
 
-      console.log("✅ CLIENTE: mensagem enviada");
-
       setTextoMensagem("");
       setMensagemRespondendo(null);
     } catch (error) {
-      console.error("❌ CLIENTE: erro ao enviar:", error);
-
+      console.error("Erro ao enviar mensagem:", error);
       showToast?.(error.message || "Erro ao enviar mensagem");
     } finally {
       setEnviandoMensagem(false);
     }
   }
 
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
   async function excluirMensagem(mensagemId) {
-    if (!conversaAtual) {
-      return;
-    }
+    if (!conversaAtual) return;
 
     const confirmou = window.confirm("Deseja realmente excluir esta mensagem?");
-
-    if (!confirmou) {
-      return;
-    }
+    if (!confirmou) return;
 
     try {
       await excluirMensagemApi(conversaAtual, mensagemId);
-
       setMensagensChat((prev) =>
-<<<<<<< HEAD
-        prev.filter((mensagem) => Number(mensagem.id) !== Number(mensagemId)),
-=======
         prev.filter((m) => Number(m.id) !== Number(mensagemId)),
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
       );
-
       showToast?.("Mensagem excluída com sucesso!");
     } catch (error) {
       console.error("Erro ao excluir mensagem:", error);
-
       showToast?.(error.message || "Erro ao excluir mensagem");
     }
   }
 
-<<<<<<< HEAD
   // =========================================================
-  // FORMATADORES
+  // FORMATADORES E UTILITÁRIOS
   // =========================================================
 
-  function formatarData(data) {
-    if (!data) {
-      return "";
-    }
-=======
   function formatarData(data) {
     if (!data) return "";
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
-
     const partes = data.split("-");
-
-    if (partes.length !== 3) {
-      return data;
-    }
-
+    if (partes.length !== 3) return data;
     return `${partes[2]}/${partes[1]}/${partes[0]}`;
   }
 
@@ -960,38 +577,19 @@ const [enviandoCase, setEnviandoCase] = useState(false);
     return Number(valor || 0).toFixed(2);
   }
 
-<<<<<<< HEAD
-  function formatarHora(data) {
-    if (!data) {
-      return "";
-    }
-
-    return new Date(data).toLocaleTimeString("pt-BR", {
-=======
   function formatarMensagemHora(data) {
     if (!data) return "";
-
     const dataObj = new Date(data);
-
-    if (Number.isNaN(dataObj.getTime())) {
-      return "";
-    }
+    if (Number.isNaN(dataObj.getTime())) return "";
 
     return dataObj.toLocaleTimeString("pt-BR", {
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
       hour: "2-digit",
       minute: "2-digit",
     });
   }
 
-
-  // =========================================================
-  // MENTORES FILTRADOS
-  // =========================================================
-
   function gerarIniciais(nome) {
     if (!nome) return "?";
-
     return nome
       .split(" ")
       .filter(Boolean)
@@ -1003,10 +601,7 @@ const [enviandoCase, setEnviandoCase] = useState(false);
 
   const mentoresFiltrados = mentores.filter((mentor) => {
     const termo = searchQuery.toLowerCase().trim();
-
-    if (!termo) {
-      return true;
-    }
+    if (!termo) return true;
 
     return (
       mentor.nome?.toLowerCase().includes(termo) ||
@@ -1015,13 +610,6 @@ const [enviandoCase, setEnviandoCase] = useState(false);
     );
   });
 
-<<<<<<< HEAD
-  // =========================================================
-  // CONVERSA ATUAL
-  // =========================================================
-
-=======
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
   const solicitacaoAtual = chatSolicitacoes.find(
     (item) => Number(item.conversaId) === Number(conversaAtual),
   );
@@ -1030,21 +618,13 @@ const [enviandoCase, setEnviandoCase] = useState(false);
     (item) => item.status === "ACEITA" && item.conversaId,
   );
 
-<<<<<<< HEAD
   // =========================================================
   // RENDER
   // =========================================================
 
   return (
     <div className="flex flex-col md:flex-row gap-8">
-      {/* ================================================= */}
-      {/* MENU */}
-      {/* ================================================= */}
-
-=======
-  return (
-    <div className="flex flex-col md:flex-row gap-8">
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
+      {/* MENU LATERAL */}
       <aside className="w-full md:w-64 flex-shrink-0">
         <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
           <div className="px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
@@ -1055,46 +635,23 @@ const [enviandoCase, setEnviandoCase] = useState(false);
             <button
               onClick={() => {
                 fecharConversa();
-
                 setActiveTab("explorar");
-
                 setSelectedMentor(null);
               }}
-<<<<<<< HEAD
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
-                activeTab === "explorar"
-                  ? "bg-emerald-600 text-white"
-=======
               className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 activeTab === "explorar"
                   ? "bg-emerald-600 text-white shadow-sm"
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                   : "text-slate-600 hover:bg-slate-100"
               }`}
             >
               <i className="fas fa-search w-5"></i>
-
               <span>Buscar Mentores</span>
             </button>
 
             <button
               onClick={() => {
                 fecharConversa();
-<<<<<<< HEAD
-                setActiveTab("meus-cases");
-              }}
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
-                activeTab === "meus-cases"
-                  ? "bg-emerald-600 text-white"
-                  : "text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              <i className="fas fa-folder-plus w-5"></i>
-              <span>Meus Cases</span>
-=======
-
                 setActiveTab("cases");
-
                 setSelectedMentor(null);
               }}
               className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
@@ -1103,69 +660,45 @@ const [enviandoCase, setEnviandoCase] = useState(false);
                   : "text-slate-600 hover:bg-slate-100"
               }`}
             >
-              <i className="fas fa-search w-5"></i>
-
-              <span>Criar um case</span>
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
+              <i className="fas fa-folder-plus w-5"></i>
+              <span>Criar um Case</span>
             </button>
 
             <button
               onClick={() => {
                 fecharConversa();
-
                 setActiveTab("agendamentos");
-
                 setSelectedMentor(null);
               }}
-<<<<<<< HEAD
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
-                activeTab === "agendamentos"
-                  ? "bg-emerald-600 text-white"
-=======
               className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 activeTab === "agendamentos"
                   ? "bg-emerald-600 text-white shadow-sm"
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                   : "text-slate-600 hover:bg-slate-100"
               }`}
             >
               <i className="fas fa-calendar-check w-5"></i>
-
               <span>Meus Agendamentos</span>
             </button>
 
             <button
               onClick={() => {
                 setActiveTab("chat");
-
                 setSelectedMentor(null);
-
                 carregarSolicitacoesChat();
               }}
-<<<<<<< HEAD
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition ${
-                activeTab === "chat"
-                  ? "bg-emerald-600 text-white"
-=======
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 activeTab === "chat"
                   ? "bg-emerald-600 text-white shadow-sm"
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                   : "text-slate-600 hover:bg-slate-100"
               }`}
             >
               <div className="flex items-center space-x-3">
                 <i className="fas fa-comments w-5"></i>
-
                 <span>Chat com Mentor</span>
               </div>
 
               {chatsAceitos.length > 0 && (
-<<<<<<< HEAD
-                <span className="bg-white text-emerald-700 text-[10px] min-w-5 h-5 rounded-full flex items-center justify-center font-bold">
-=======
                 <span className="bg-white text-emerald-700 text-[10px] min-w-5 h-5 px-1.5 rounded-full flex items-center justify-center font-bold">
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                   {chatsAceitos.length}
                 </span>
               )}
@@ -1174,28 +707,15 @@ const [enviandoCase, setEnviandoCase] = useState(false);
         </div>
       </aside>
 
-<<<<<<< HEAD
-      {/* ================================================= */}
-      {/* CONTEÚDO */}
-      {/* ================================================= */}
-
-      <main className="flex-1">
-=======
+      {/* CONTEÚDO PRINCIPAL */}
       <main className="flex-1 min-w-0">
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
         {erro && (
           <div className="mb-5 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
             {erro}
           </div>
         )}
 
-<<<<<<< HEAD
-        {/* ================================================= */}
-        {/* EXPLORAR */}
-        {/* ================================================= */}
-
-=======
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
+        {/* EXPLORAR MENTORES */}
         {activeTab === "explorar" && !selectedMentor && (
           <div>
             <input
@@ -1207,19 +727,11 @@ const [enviandoCase, setEnviandoCase] = useState(false);
             />
 
             {loadingMentores ? (
-<<<<<<< HEAD
-              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500">
-                Carregando mentores...
-              </div>
-            ) : mentoresFiltrados.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500">
-=======
               <div className="bg-white rounded-2xl border p-8 text-center text-slate-500">
                 Carregando mentores...
               </div>
             ) : mentoresFiltrados.length === 0 ? (
               <div className="bg-white rounded-2xl border p-8 text-center text-slate-500">
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                 Nenhum mentor encontrado.
               </div>
             ) : (
@@ -1227,24 +739,11 @@ const [enviandoCase, setEnviandoCase] = useState(false);
                 {mentoresFiltrados.map((mentor) => (
                   <div
                     key={mentor.id}
-<<<<<<< HEAD
-                    className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold mb-4">
-                        {mentor.nome
-                          ?.split(" ")
-                          .slice(0, 2)
-                          .map((parte) => parte[0])
-                          .join("")
-                          .toUpperCase()}
-=======
                     className="bg-white rounded-2xl border p-6 shadow-sm flex flex-col justify-between"
                   >
                     <div>
                       <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold mb-4">
                         {gerarIniciais(mentor.nome)}
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                       </div>
 
                       <h3 className="font-bold text-slate-900 text-lg">
@@ -1252,30 +751,17 @@ const [enviandoCase, setEnviandoCase] = useState(false);
                       </h3>
 
                       <p className="text-xs text-slate-500 mb-4">
-<<<<<<< HEAD
-                        {mentor.cargo || "Mentor profissional"}
-                      </p>
-
-                      <p className="text-sm text-slate-600 mb-5">
-                        {mentor.biografia ||
-                          "Mentor disponível para compartilhar conhecimento e experiência."}
-=======
                         {mentor.cargo}
                       </p>
 
                       <p className="text-sm text-slate-600 mb-5">
                         {mentor.biografia}
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                       </p>
                     </div>
 
                     <button
                       onClick={() => abrirMentor(mentor)}
-<<<<<<< HEAD
-                      className="px-4 py-3 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition"
-=======
                       className="px-4 py-3 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-all"
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                     >
                       Ver Perfil e Agenda
                     </button>
@@ -1286,17 +772,9 @@ const [enviandoCase, setEnviandoCase] = useState(false);
           </div>
         )}
 
-<<<<<<< HEAD
-        {/* ================================================= */}
-        {/* PERFIL E AGENDA */}
-        {/* ================================================= */}
-
-        {activeTab === "explorar" && selectedMentor && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-=======
+        {/* AGENDA DO MENTOR SELECIONADO */}
         {activeTab === "explorar" && selectedMentor && (
           <div className="bg-white rounded-2xl border p-6 shadow-sm">
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
             <button
               onClick={() => setSelectedMentor(null)}
               className="mb-6 text-sm font-semibold text-slate-500 hover:text-slate-800"
@@ -1307,16 +785,7 @@ const [enviandoCase, setEnviandoCase] = useState(false);
             <div className="mb-8">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xl">
-<<<<<<< HEAD
-                  {selectedMentor.nome
-                    ?.split(" ")
-                    .slice(0, 2)
-                    .map((parte) => parte[0])
-                    .join("")
-                    .toUpperCase()}
-=======
                   {gerarIniciais(selectedMentor.nome)}
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                 </div>
 
                 <div>
@@ -1333,13 +802,6 @@ const [enviandoCase, setEnviandoCase] = useState(false);
               <p className="text-slate-600 mt-5">{selectedMentor.biografia}</p>
 
               <button
-<<<<<<< HEAD
-                onClick={() => solicitarChat(selectedMentor)}
-                className="mt-5 px-5 py-3 bg-indigo-50 text-indigo-700 rounded-xl text-sm font-semibold hover:bg-indigo-100 transition"
-              >
-                <i className="fas fa-comments mr-2"></i>
-                Solicitar conversa prévia
-=======
                 disabled={!podeSolicitarChat(selectedMentor.id)}
                 onClick={() => solicitarChat(selectedMentor)}
                 className={`mt-5 px-5 py-3 rounded-xl text-sm font-semibold transition-all ${
@@ -1349,9 +811,7 @@ const [enviandoCase, setEnviandoCase] = useState(false);
                 }`}
               >
                 <i className="fas fa-comments mr-2"></i>
-
                 {textoBotaoChat(selectedMentor.id)}
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
               </button>
             </div>
 
@@ -1365,11 +825,7 @@ const [enviandoCase, setEnviandoCase] = useState(false);
                   Carregando horários...
                 </div>
               ) : agendaSlots.length === 0 ? (
-<<<<<<< HEAD
-                <div className="p-6 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-500">
-=======
                 <div className="p-6 rounded-xl bg-slate-50 border text-sm text-slate-500">
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                   Este mentor não possui horários disponíveis no momento.
                 </div>
               ) : (
@@ -1379,11 +835,7 @@ const [enviandoCase, setEnviandoCase] = useState(false);
                       key={slot.id}
                       disabled={agendandoId === slot.id}
                       onClick={() => agendarHorario(slot)}
-<<<<<<< HEAD
-                      className="p-4 border border-emerald-200 rounded-xl bg-emerald-50 text-emerald-800 text-left hover:bg-emerald-600 hover:text-white transition disabled:opacity-50"
-=======
                       className="p-4 border border-emerald-200 rounded-xl bg-emerald-50 text-emerald-800 text-left hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-50"
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                     >
                       <div className="font-bold">
                         {formatarData(slot.dtMentoria)}
@@ -1402,17 +854,9 @@ const [enviandoCase, setEnviandoCase] = useState(false);
           </div>
         )}
 
-<<<<<<< HEAD
-        {/* ================================================= */}
-        {/* AGENDAMENTOS */}
-        {/* ================================================= */}
-
-        {activeTab === "agendamentos" && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-=======
+        {/* AGENDAMENTOS DO CLIENTE */}
         {activeTab === "agendamentos" && (
           <div className="bg-white rounded-2xl border p-6 shadow-sm">
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
             <div className="flex justify-between items-center mb-5">
               <h2 className="text-xl font-bold text-slate-800">
                 Meus Agendamentos
@@ -1436,42 +880,6 @@ const [enviandoCase, setEnviandoCase] = useState(false);
               </div>
             ) : (
               <div className="space-y-3">
-<<<<<<< HEAD
-                {agendamentos.map((agendamento) => (
-                  <div
-                    key={agendamento.id}
-                    className="p-5 border rounded-xl flex flex-col md:flex-row md:justify-between md:items-center gap-4"
-                  >
-                    <div>
-                      <h4 className="font-bold text-slate-900">
-                        {agendamento.mentorNome}
-                      </h4>
-
-                      <p className="text-sm text-slate-500">
-                        {agendamento.mentorCargo}
-                      </p>
-
-                      <p className="text-sm text-slate-600 mt-2">
-                        {formatarData(agendamento.dtMentoria)}
-                        {" às "}
-                        {agendamento.hrMentoria}
-                      </p>
-
-                      <p className="text-sm font-semibold text-slate-700 mt-1">
-                        R$ {formatarValor(agendamento.valor)}
-                      </p>
-                    </div>
-
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        agendamento.situacao === "AGENDADA"
-                          ? "bg-emerald-100 text-emerald-800"
-                          : "bg-slate-100 text-slate-700"
-                      }`}
-                    >
-                      {agendamento.situacao}
-                    </span>
-=======
                 {agendamentos.map((item) => (
                   <div key={item.id} className="p-5 border rounded-xl">
                     <h4 className="font-bold text-slate-900">
@@ -1487,7 +895,6 @@ const [enviandoCase, setEnviandoCase] = useState(false);
                     <p className="text-sm font-semibold text-slate-700 mt-1">
                       R$ {formatarValor(item.valor)}
                     </p>
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                   </div>
                 ))}
               </div>
@@ -1495,17 +902,15 @@ const [enviandoCase, setEnviandoCase] = useState(false);
           </div>
         )}
 
-<<<<<<< HEAD
-        {activeTab === "meus-cases" && (
+        {/* CRIAR E LISTAR CASES */}
+        {activeTab === "cases" && (
           <div className="space-y-8">
-            {/* FORMULÁRIO DE CRIAÇÃO */}
             <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
               <h2 className="text-2xl font-bold text-slate-900 mb-1">
                 Criar Novo Case
               </h2>
               <p className="text-sm text-slate-500 mb-6">
-                Publique seu problema para encontrar mentores com as
-                especialidades certas.
+                Publique seu problema para encontrar mentores com as especialidades certas.
               </p>
 
               <form onSubmit={handleCriarCase} className="space-y-6">
@@ -1633,7 +1038,7 @@ const [enviandoCase, setEnviandoCase] = useState(false);
               </form>
             </div>
 
-            {/* LISTAGEM DOS MEUS CASES */}
+            {/* LISTAGEM DOS CASES DO CLIENTE */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
               <h3 className="text-lg font-bold text-slate-800 mb-4">
                 Meus Cases Cadastrados
@@ -1656,7 +1061,7 @@ const [enviandoCase, setEnviandoCase] = useState(false);
                       <div className="flex justify-between items-start">
                         <h4 className="font-bold text-slate-900">{c.titulo}</h4>
                         <span className="text-emerald-700 font-bold text-sm">
-                          R$ {Number(c.valorEstipulado).toFixed(2)}
+                          R$ {Number(c.valorEstipulado || 0).toFixed(2)}
                         </span>
                       </div>
                       <p className="text-sm text-slate-600 mt-2">
@@ -1680,167 +1085,7 @@ const [enviandoCase, setEnviandoCase] = useState(false);
           </div>
         )}
 
-        {/* ================================================= */}
         {/* CHAT */}
-        {/* ================================================= */}
-
-        {activeTab === "chat" && (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="flex h-[700px]">
-              {/* LISTA DOS CHATS */}
-
-              <div className="w-80 border-r border-slate-200 flex flex-col">
-                <div className="p-5 border-b border-slate-200">
-                  <h2 className="text-lg font-bold text-slate-800">Chat</h2>
-
-                  <p className="text-sm text-slate-500 mt-1">
-                    Converse com seus mentores
-                  </p>
-                </div>
-
-                <div className="flex-1 overflow-y-auto">
-                  {chatsAceitos.length === 0 ? (
-                    <div className="p-6 text-center text-slate-500">
-                      <i className="fas fa-comments text-3xl mb-3 text-slate-300"></i>
-
-                      <p>Nenhuma conversa disponível.</p>
-                    </div>
-                  ) : (
-                    chatsAceitos.map((solicitacao) => {
-                      const ativa =
-                        Number(conversaAtual) ===
-                        Number(solicitacao.conversaId);
-
-                      return (
-                        <button
-                          key={solicitacao.id}
-                          type="button"
-                          onClick={() => abrirConversa(solicitacao.conversaId)}
-                          className={`w-full text-left p-4 border-b border-slate-100 transition ${
-                            ativa
-                              ? "bg-blue-50 border-l-4 border-l-blue-600"
-                              : "hover:bg-slate-50"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-11 h-11 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold flex-shrink-0">
-                              {solicitacao.mentorNome
-                                ?.split(" ")
-                                .slice(0, 2)
-                                .map((parte) => parte[0])
-                                .join("")
-                                .toUpperCase()}
-                            </div>
-
-                            <div className="min-w-0 flex-1">
-                              <p className="font-semibold text-slate-800 truncate">
-                                {solicitacao.mentorNome}
-                              </p>
-
-                              <p className="text-xs text-slate-500 mt-1">
-                                Clique para conversar
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })
-=======
-       {activeTab === "cases" && (
-  <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm max-w-3xl mx-auto">
-    <div className="mb-6">
-      <h2 className="text-xl font-bold text-slate-800">Criar Novo Case</h2>
-      <p className="text-sm text-slate-500 mt-1">
-        Publique seu problema para encontrar mentores com as especialidades certas.
-      </p>
-    </div>
-
-    <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-      {/* Título do Case */}
-      <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-          Título do Case *
-        </label>
-        <input
-          type="text"
-          placeholder="Ex: Otimização de Performance em Banco de Dados"
-          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
-        />
-      </div>
-
-      {/* Descrição */}
-      <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-          Descrição Detalhada *
-        </label>
-        <textarea
-          rows={5}
-          placeholder="Descreva o problema em detalhes e os objetivos esperados..."
-          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
-        />
-      </div>
-
-      {/* Valor Estipulado */}
-      <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-          Valor Estipulado (R$) *
-        </label>
-        <div className="relative">
-          <span className="absolute left-4 top-2.5 text-slate-400 font-medium text-sm">
-            R$
-          </span>
-          <input
-            type="number"
-            step="0.01"
-            placeholder="0,00"
-            className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
-          />
-        </div>
-      </div>
-
-      {/* Especialidades Necessárias */}
-      <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-          Especialidades que podem ajudar *
-        </label>
-
-        <div className="flex gap-2 mb-3">
-          <input
-            type="text"
-            placeholder="Ex: React, Postgres, DevOps..."
-            className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
-          />
-          <button
-            type="button"
-            className="px-4 py-2.5 bg-slate-800 text-white rounded-xl text-sm font-semibold hover:bg-slate-900 transition-all"
-          >
-            Adicionar
-          </button>
-        </div>
-      </div>
-
-      {/* Botões de Ação */}
-      <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-        <button
-          type="button"
-          onClick={() => setActiveTab("explorar")}
-          className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all"
-        >
-          Cancelar
-        </button>
-
-        <button
-          type="submit"
-          className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-all flex items-center gap-2"
-        >
-          <i className="fas fa-check"></i>
-          <span>Publicar Case</span>
-        </button>
-      </div>
-    </form>
-  </div>
-)}
-
         {activeTab === "chat" && (
           <div className="bg-slate-100 rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
             <div className="flex h-[720px]">
@@ -1900,27 +1145,10 @@ const [enviandoCase, setEnviandoCase] = useState(false);
                         </div>
                       </button>
                     ))
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                   )}
                 </div>
               </div>
 
-<<<<<<< HEAD
-              {/* CONVERSA */}
-
-              <div className="flex-1 flex flex-col min-w-0">
-                {!conversaAtual ? (
-                  <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center text-slate-400">
-                      <i className="fas fa-comments text-5xl mb-4"></i>
-
-                      <h3 className="text-lg font-semibold text-slate-600">
-                        Nenhuma conversa selecionada
-                      </h3>
-
-                      <p className="text-sm mt-2">
-                        Escolha um mentor ao lado para abrir o chat.
-=======
               <div
                 className={`flex-1 min-w-0 flex flex-col bg-[#f0f2f5] ${
                   conversaAtual ? "flex" : "hidden md:flex"
@@ -1937,35 +1165,11 @@ const [enviandoCase, setEnviandoCase] = useState(false);
 
                       <p className="text-xs mt-1 text-slate-400">
                         Selecione uma conversa ao lado para conversar.
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                       </p>
                     </div>
                   </div>
                 ) : (
                   <>
-<<<<<<< HEAD
-                    {/* CABEÇALHO */}
-
-                    <div className="p-4 border-b border-slate-200 bg-white flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
-                          {solicitacaoAtual?.mentorNome
-                            ?.split(" ")
-                            .slice(0, 2)
-                            .map((parte) => parte[0])
-                            .join("")
-                            .toUpperCase()}
-                        </div>
-
-                        <div>
-                          <h3 className="font-bold text-slate-800">
-                            {solicitacaoAtual?.mentorNome || "Mentor"}
-                          </h3>
-
-                          <p className="text-xs text-green-600">
-                            Conversa ativa
-                          </p>
-=======
                     <div className="h-[68px] flex-shrink-0 px-5 bg-white border-b border-slate-200 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <button
@@ -1988,42 +1192,18 @@ const [enviandoCase, setEnviandoCase] = useState(false);
                           <span className="text-[11px] text-slate-400">
                             conversa
                           </span>
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                         </div>
                       </div>
 
                       <button
                         type="button"
                         onClick={fecharConversa}
-<<<<<<< HEAD
-                        className="w-9 h-9 rounded-lg hover:bg-slate-100 text-slate-500"
-                        title="Fechar conversa"
-=======
                         className="hidden md:flex w-9 h-9 rounded-full hover:bg-slate-100 text-slate-400 items-center justify-center"
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                       >
                         <i className="fas fa-times"></i>
                       </button>
                     </div>
 
-<<<<<<< HEAD
-                    {/* MENSAGENS */}
-
-                    <div className="flex-1 min-h-0 overflow-y-auto p-6 bg-[#f5f7f9]">
-                      {loadingChat ? (
-                        <div className="h-full flex items-center justify-center text-slate-500">
-                          Carregando mensagens...
-                        </div>
-                      ) : mensagensChat.length === 0 ? (
-                        <div className="h-full flex items-center justify-center">
-                          <div className="text-center text-slate-400">
-                            <i className="fas fa-comment-dots text-4xl mb-3"></i>
-
-                            <p>Nenhuma mensagem ainda.</p>
-
-                            <p className="text-sm mt-1">
-                              Envie a primeira mensagem!
-=======
                     <div className="flex-1 min-h-0 overflow-y-auto px-4 py-6 bg-[#e5ddd5]/30">
                       {loadingChat ? (
                         <div className="h-full flex items-center justify-center">
@@ -2040,17 +1220,10 @@ const [enviandoCase, setEnviandoCase] = useState(false);
 
                             <p className="text-xs text-slate-400 mt-1">
                               Envie a primeira mensagem para começar.
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                             </p>
                           </div>
                         </div>
                       ) : (
-<<<<<<< HEAD
-                        <div className="space-y-4">
-                          {mensagensChat.map((mensagem) => {
-                            const minhaMensagem =
-                              Number(mensagem.remetenteId) === Number(user?.id);
-=======
                         <div className="max-w-3xl mx-auto space-y-3">
                           {mensagensChat.map((mensagem) => {
                             const minha = eMinhaMensagem(mensagem);
@@ -2063,32 +1236,10 @@ const [enviandoCase, setEnviandoCase] = useState(false);
                               "Mentor";
 
                             const autorNome = minha ? "Você" : nomeRemetente;
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
 
                             return (
                               <div
                                 key={mensagem.id}
-<<<<<<< HEAD
-                                className={`flex ${
-                                  minhaMensagem
-                                    ? "justify-end"
-                                    : "justify-start"
-                                }`}
-                              >
-                                <div
-                                  className={`max-w-[70%] px-4 py-3 rounded-2xl ${
-                                    minhaMensagem
-                                      ? "bg-blue-600 text-white rounded-br-md"
-                                      : "bg-white text-slate-800 border border-slate-200 rounded-bl-md"
-                                  }`}
-                                >
-                                  <div className="flex items-start gap-3">
-                                    <p className="text-sm whitespace-pre-wrap break-words">
-                                      {mensagem.conteudo}
-                                    </p>
-
-                                    {minhaMensagem && (
-=======
                                 className={`flex w-full ${
                                   minha ? "justify-end" : "justify-start"
                                 }`}
@@ -2140,93 +1291,27 @@ const [enviandoCase, setEnviandoCase] = useState(false);
                                     </button>
 
                                     {minha && (
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                                       <button
                                         type="button"
                                         onClick={() =>
                                           excluirMensagem(mensagem.id)
                                         }
-<<<<<<< HEAD
-                                        className="text-xs opacity-70 hover:opacity-100 flex-shrink-0"
-                                        title="Excluir mensagem"
-                                      >
-                                        <i className="fas fa-trash"></i>
-                                      </button>
-                                    )}
-                                  </div>
-
-                                  <p
-                                    className={`text-[10px] mt-1 ${
-                                      minhaMensagem
-                                        ? "text-blue-100"
-                                        : "text-slate-400"
-                                    }`}
-                                  >
-                                    {mensagem.dataEnvio
-                                      ? new Date(
-                                          mensagem.dataEnvio,
-                                        ).toLocaleTimeString("pt-BR", {
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                        })
-                                      : ""}
-                                  </p>
-=======
                                         className="opacity-0 group-hover:opacity-100 text-[11px]"
                                       >
                                         <i className="fas fa-trash-alt"></i>
                                       </button>
                                     )}
                                   </div>
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                                 </div>
                               </div>
                             );
                           })}
-<<<<<<< HEAD
-=======
 
                           <div ref={mensagensEndRef} />
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                         </div>
                       )}
                     </div>
 
-<<<<<<< HEAD
-                    {/* ENVIAR MENSAGEM */}
-
-                    <div className="p-4 bg-white border-t border-slate-200 flex-shrink-0">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="text"
-                          value={textoMensagem}
-                          onChange={(e) => setTextoMensagem(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-
-                              enviarMensagemChat();
-                            }
-                          }}
-                          placeholder="Digite sua mensagem..."
-                          className="flex-1 px-4 py-3 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-
-                        <button
-                          type="button"
-                          onClick={enviarMensagemChat}
-                          disabled={!textoMensagem.trim()}
-                          className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                        >
-                          <i className="fas fa-paper-plane"></i>
-                        </button>
-                      </div>
-
-                      <p className="text-xs text-slate-400 mt-2">
-                        Enter para enviar
-                      </p>
-                    </div>
-=======
                     <form
                       onSubmit={enviarMensagemChat}
                       className="flex-shrink-0 bg-white border-t border-slate-200 px-4 py-3"
@@ -2280,7 +1365,6 @@ const [enviandoCase, setEnviandoCase] = useState(false);
                         </div>
                       </div>
                     </form>
->>>>>>> fb422bf1b66b27cedd2bc4e1c818ea40b5d74b82
                   </>
                 )}
               </div>
