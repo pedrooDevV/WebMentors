@@ -9,10 +9,19 @@ function getToken() {
 }
 
 
+export async function atualizarPerfilApi(dadosPerfil) {
+  const token = getToken();
+  const response = await fetch(`${API_URL}/meu-perfil`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(dadosPerfil),
+  });
 
-
-
-
+  return tratarResposta(response, "Erro ao atualizar perfil");
+}
 
 
 
@@ -116,15 +125,16 @@ export async function loginApi(dadosLogin) {
 export async function registrarUsuarioApi(dadosUsuario) {
   const response = await fetch(`${API_URL}/registraMentoresEClientes`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(dadosUsuario),
   });
 
-  if (!response.ok) {
-    throw new Error("Erro ao registrar usuário");
-  }
-
-  return response.status === 201;
+  return tratarResposta(
+    response,
+    "Erro ao registrar usuário"
+  );
 }
 
 export async function buscarEspecialidades() {
