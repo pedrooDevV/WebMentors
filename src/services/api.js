@@ -1,6 +1,8 @@
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 // Garante que o /LeoApi está no final da URL base
-const API_URL = BASE_URL.endsWith("/LeoApi") ? BASE_URL : `${BASE_URL.replace(/\/$/, "")}/LeoApi`;
+const API_URL = BASE_URL.endsWith("/LeoApi")
+  ? BASE_URL
+  : `${BASE_URL.replace(/\/$/, "")}/LeoApi`;
 
 function getToken() {
   return localStorage.getItem("token");
@@ -11,7 +13,7 @@ async function tratarResposta(response, mensagemPadrao) {
 
   if (!response.ok) {
     throw new Error(
-      data?.mensagem || data?.erro || data?.message || mensagemPadrao
+      data?.mensagem || data?.erro || data?.message || mensagemPadrao,
     );
   }
 
@@ -69,6 +71,9 @@ export async function loginApi(dadosLogin) {
     body: JSON.stringify(dadosLogin),
   });
 
+  if (response.status === 401) {
+    tratarResposta(response, "Seção expirada");
+     }
   return tratarResposta(response, "Erro na autenticação");
 }
 
@@ -260,7 +265,7 @@ export async function excluirMensagemApi(conversaId, mensagemId) {
     {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
-    }
+    },
   );
 
   if (!response.ok) {

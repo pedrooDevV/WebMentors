@@ -67,6 +67,32 @@ export default function App() {
     }, 4000);
   };
 
+  const handleSessionExpired = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+
+    setUser(null);
+
+    showToast("Sua sessão expirou. Faça login novamente.", "error");
+  };
+
+  useEffect(() => {
+    const handleExpired = () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("usuario");
+
+      setUser(null);
+
+      showToast("Sua sessão expirou. Faça login novamente.", "error");
+    };
+
+    window.addEventListener("sessionExpired", handleExpired);
+
+    return () => {
+      window.removeEventListener("sessionExpired", handleExpired);
+    };
+  }, []);
+
   // Enquanto recupera o usuário do localStorage
   if (loading) {
     return <div>Carregando...</div>;
