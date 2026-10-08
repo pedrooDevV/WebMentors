@@ -262,9 +262,7 @@ export default function ClienteDashboard({ user, showToast }) {
 
             if (existe) {
               return prev.map((item) =>
-                Number(item.id) === Number(solicitacao.id)
-                  ? solicitacao
-                  : item,
+                Number(item.id) === Number(solicitacao.id) ? solicitacao : item,
               );
             }
 
@@ -385,7 +383,9 @@ export default function ClienteDashboard({ user, showToast }) {
 
     if (solicitacao && solicitacao.status !== "RECUSADA") {
       if (solicitacao.status === "PENDENTE") {
-        showToast?.("Você já possui uma solicitação pendente para esse mentor.");
+        showToast?.(
+          "Você já possui uma solicitação pendente para esse mentor.",
+        );
       }
       if (solicitacao.status === "ACEITA") {
         showToast?.("Você já possui uma conversa com esse mentor.");
@@ -910,7 +910,8 @@ export default function ClienteDashboard({ user, showToast }) {
                 Criar Novo Case
               </h2>
               <p className="text-sm text-slate-500 mb-6">
-                Publique seu problema para encontrar mentores com as especialidades certas.
+                Publique seu problema para encontrar mentores com as
+                especialidades certas.
               </p>
 
               <form onSubmit={handleCriarCase} className="space-y-6">
