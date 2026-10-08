@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import {
 loginApi,
-cadastrarUsuarioApi,
-buscarEspecialidadesApi,
+registrarUsuarioApi,
+buscarEspecialidades,
 } from "../services/api.js";
 
 export default function Login({
@@ -46,7 +46,7 @@ carregarEspecialidades();
 
 const carregarEspecialidades = async () => {
 try {
-const data = await buscarEspecialidadesApi();
+const data = await buscarEspecialidades();
 setEspecialidades(data);
 } catch (error) {
 showToast(
@@ -181,7 +181,7 @@ try {
     dados.especialidades = cadastroForm.especialidades;
   }
 
-  await cadastrarUsuarioApi(dados);
+  await registrarUsuarioApi(dados);
 
   showToast(
     "Cadastro realizado com sucesso! Agora faça login.",
