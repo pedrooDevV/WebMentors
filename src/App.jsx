@@ -6,6 +6,7 @@ import ClienteDashboard from "./pages/ClienteDashboard.jsx";
 import MentorDashboard from "./pages/MentorDashboard.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import React, { useState, useRef, useEffect } from "react";
+import { logoutApi } from "./services/api.js";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -49,6 +50,7 @@ export default function App() {
     } finally {
       localStorage.removeItem("token");
       localStorage.removeItem("usuario");
+
       setUser(null);
     }
   };
@@ -73,6 +75,14 @@ export default function App() {
 
   useEffect(() => {
     const handleExpired = () => {
+      const tokenAtual = localStorage.getItem("token");
+
+      // Se não existe token, o usuário já fez logout.
+      // Ignora qualquer requisição antiga que tenha retornado 401.
+      if (!tokenAtual) {
+        return;
+      }
+
       localStorage.removeItem("token");
       localStorage.removeItem("usuario");
 

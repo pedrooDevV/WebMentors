@@ -8,6 +8,39 @@ function getToken() {
   return localStorage.getItem("token");
 }
 
+
+
+
+
+
+
+
+
+export async function logoutApi() {
+const token = getToken();
+
+if (!token) {
+return true;
+}
+
+const response = await fetch(`${API_URL}/logout`, {
+method: "POST",
+headers: {
+Authorization: `Bearer ${token}`,
+},
+
+}
+);
+
+if (!response.ok) {
+throw new Error("Erro ao realizar logout");
+}
+
+return true;
+}
+
+
+
 async function tratarResposta(response, mensagemPadrao) {
   const data = await response.json().catch(() => null);
 
@@ -19,6 +52,10 @@ async function tratarResposta(response, mensagemPadrao) {
 
   return data;
 }
+
+
+
+
 
 // =========================================================
 // CASES DE ESTUDO
