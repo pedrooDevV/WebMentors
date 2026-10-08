@@ -67,14 +67,12 @@ export async function buscarMeusCasesApi() {
 export async function loginApi(dadosLogin) {
   const response = await fetch(`${API_URL}/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(dadosLogin),
   });
 
-  if (response.status === 401) {
-    tratarResposta(response, "Seção expirada");
-     }
-     
   return tratarResposta(response, "Erro na autenticação");
 }
 
