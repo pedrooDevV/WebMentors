@@ -74,6 +74,7 @@ export async function loginApi(dadosLogin) {
   if (response.status === 401) {
     tratarResposta(response, "Seção expirada");
      }
+     
   return tratarResposta(response, "Erro na autenticação");
 }
 
