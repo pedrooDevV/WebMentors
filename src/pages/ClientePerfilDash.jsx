@@ -9,6 +9,67 @@ export default function ClientePerfilDash({ user, showToast, onBack }) {
     senha: "",
   });
 
+  const photoStorageKey = `fotoPerfil:${user?.id ?? user?.nome ?? "usuario"}`;
+
+  const [fotoPerfil, setFotoPerfil] = useState("");
+  const [showFotoModal, setShowFotoModal] = useState(false);
+  const [fotoTemporaria, setFotoTemporaria] = useState("");
+
+  useEffect(() => {
+    setFotoPerfil(localStorage.getItem(photoStorageKey) || "");
+  }, [photoStorageKey]);
+
+  const handleSelecionarFoto = (e) => {
+    const arquivo = e.target.files?.[0];
+
+    if (!arquivo) return;
+
+    if (!arquivo.type.startsWith("image/")) {
+      showToast?.("Selecione um arquivo de imagem.", "error");
+      e.target.value = "";
+      return;
+    }
+
+    if (arquivo.size > 2 * 1024 * 1024) {
+      showToast?.("A imagem deve ter no máximo 2 MB.", "error");
+      e.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setFotoTemporaria(reader.result);
+      }
+    };
+
+    reader.onerror = () => {
+      showToast?.("Não foi possível carregar a imagem.", "error");
+    };
+
+    reader.readAsDataURL(arquivo);
+  };
+
+  const handleSalvarFoto = () => {
+    if (!fotoTemporaria) {
+      showToast?.("Selecione uma foto antes de salvar.", "error");
+      return;
+    }
+
+    try {
+      localStorage.setItem(photoStorageKey, fotoTemporaria);
+
+      setFotoPerfil(fotoTemporaria);
+      setShowFotoModal(false);
+      setFotoTemporaria("");
+
+      showToast?.("Foto de perfil atualizada!", "success");
+    } catch (error) {
+      showToast?.("Não foi possível salvar a foto.", "error");
+    }
+  };
+
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -58,12 +119,33 @@ export default function ClientePerfilDash({ user, showToast, onBack }) {
 
       <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-100">
         <div className="flex items-center gap-4 mb-8 pb-6 border-b border-slate-100">
-          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl font-bold">
-            {formData.nome ? formData.nome.charAt(0).toUpperCase() : "C"}
-          </div>
+          <button
+            type="button"
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setFotoTemporaria(fotoPerfil);
+              setShowFotoModal(true);
+            }}
+            title="Clique com o botão direito para alterar sua foto"
+            className="w-16 h-16 rounded-full overflow-hidden bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl font-bold shrink-0 cursor-pointer hover:ring-4 hover:ring-emerald-100 transition"
+          >
+            {fotoPerfil ? (
+              <img
+                src={fotoPerfil}
+                alt="Foto de perfil"
+                className="w-full h-full object-cover"
+              />
+            ) : formData.nome ? (
+              formData.nome.charAt(0).toUpperCase()
+            ) : (
+              "C"
+            )}
+          </button>
           <div>
             <h1 className="text-2xl font-bold text-slate-800">Meu Perfil</h1>
-            <p className="text-sm text-slate-500">Gerencie suas informações pessoais</p>
+            <p className="text-sm text-slate-500">
+              Gerencie suas informações pessoais
+            </p>
           </div>
         </div>
 
