@@ -306,3 +306,31 @@ export async function excluirMensagemApi(conversaId, mensagemId) {
 
   return true;
 }
+
+export async function atualizarFotoPerfilApi(arquivo) {
+  const token = getToken();
+
+  const formData = new FormData();
+  formData.append("foto", arquivo);
+
+  const response = await fetch(`${API_URL}/perfil/foto`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message ||
+      data?.mensagem ||
+      data?.erro ||
+      "Erro ao atualizar a foto de perfil."
+    );
+  }
+
+  return data;
+}
