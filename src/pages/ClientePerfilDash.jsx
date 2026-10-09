@@ -6,11 +6,7 @@ import {
   atualizarFotoPerfilApi,
 } from "../services/api.js";
 
-export default function ClientePerfilDash({
-  user,
-  showToast,
-  onBack,
-}) {
+export default function ClientePerfilDash({ user, showToast, onBack }) {
   const [formData, setFormData] = useState({
     nome: user?.nome || "",
     email: user?.email || "",
@@ -21,9 +17,7 @@ export default function ClientePerfilDash({
   const [loading, setLoading] = useState(false);
 
   // Estados da foto de perfil
-  const [fotoPerfil, setFotoPerfil] = useState(
-    user?.fotoPerfil || ""
-  );
+  const [fotoPerfil, setFotoPerfil] = useState(user?.fotoPerfil || "");
 
   const [showFotoModal, setShowFotoModal] = useState(false);
   const [fotoTemporaria, setFotoTemporaria] = useState("");
@@ -40,10 +34,7 @@ export default function ClientePerfilDash({
 
         setFotoPerfil(foto);
       } catch (error) {
-        console.error(
-          "Erro ao carregar foto de perfil:",
-          error
-        );
+        console.error("Erro ao carregar foto de perfil:", error);
       }
     }
 
@@ -77,27 +68,17 @@ export default function ClientePerfilDash({
       return;
     }
 
-    const tiposPermitidos = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-    ];
+    const tiposPermitidos = ["image/jpeg", "image/png", "image/webp"];
 
     if (!tiposPermitidos.includes(arquivo.type)) {
-      showToast?.(
-        "Selecione uma imagem PNG, JPEG ou WebP.",
-        "error"
-      );
+      showToast?.("Selecione uma imagem PNG, JPEG ou WebP.", "error");
 
       e.target.value = "";
       return;
     }
 
     if (arquivo.size > 2 * 1024 * 1024) {
-      showToast?.(
-        "A imagem deve ter no máximo 2 MB.",
-        "error"
-      );
+      showToast?.("A imagem deve ter no máximo 2 MB.", "error");
 
       e.target.value = "";
       return;
@@ -114,10 +95,7 @@ export default function ClientePerfilDash({
     };
 
     reader.onerror = () => {
-      showToast?.(
-        "Não foi possível carregar a imagem.",
-        "error"
-      );
+      showToast?.("Não foi possível carregar a imagem.", "error");
     };
 
     reader.readAsDataURL(arquivo);
@@ -137,10 +115,7 @@ export default function ClientePerfilDash({
   // Envia a imagem para o backend Java
   const handleSalvarFoto = async () => {
     if (!arquivoFoto) {
-      showToast?.(
-        "Selecione uma nova foto antes de salvar.",
-        "error"
-      );
+      showToast?.("Selecione uma nova foto antes de salvar.", "error");
 
       return;
     }
@@ -150,48 +125,34 @@ export default function ClientePerfilDash({
     try {
       const dados = await atualizarFotoPerfilApi(arquivoFoto);
 
-      const novaFoto =
-        dados?.fotoUrl || dados?.fotoPerfil;
+      const novaFoto = dados?.fotoUrl || dados?.fotoPerfil;
 
       if (!novaFoto) {
-        throw new Error(
-          "O servidor não retornou a URL da imagem."
-        );
+        throw new Error("O servidor não retornou a URL da imagem.");
       }
 
       setFotoPerfil(novaFoto);
 
       // Atualiza os dados locais do usuário
-      const usuarioSalvo = JSON.parse(
-        localStorage.getItem("usuario") || "{}"
-      );
+      const usuarioSalvo = JSON.parse(localStorage.getItem("usuario") || "{}");
 
       localStorage.setItem(
         "usuario",
         JSON.stringify({
           ...usuarioSalvo,
           fotoPerfil: novaFoto,
-        })
+        }),
       );
 
       setShowFotoModal(false);
       setFotoTemporaria("");
       setArquivoFoto(null);
 
-      showToast?.(
-        "Foto de perfil atualizada com sucesso!",
-        "success"
-      );
+      showToast?.("Foto de perfil atualizada com sucesso!", "success");
     } catch (error) {
-      console.error(
-        "Erro ao atualizar foto de perfil:",
-        error
-      );
+      console.error("Erro ao atualizar foto de perfil:", error);
 
-      showToast?.(
-        error.message || "Erro ao atualizar a foto.",
-        "error"
-      );
+      showToast?.(error.message || "Erro ao atualizar a foto.", "error");
     } finally {
       setEnviandoFoto(false);
     }
@@ -213,12 +174,9 @@ export default function ClientePerfilDash({
         payload.senha = formData.senha;
       }
 
-      const usuarioAtualizado =
-        await atualizarPerfilApi(payload);
+      const usuarioAtualizado = await atualizarPerfilApi(payload);
 
-      const usuarioSalvo = JSON.parse(
-        localStorage.getItem("usuario") || "{}"
-      );
+      const usuarioSalvo = JSON.parse(localStorage.getItem("usuario") || "{}");
 
       const novoUsuario = {
         ...usuarioSalvo,
@@ -227,30 +185,18 @@ export default function ClientePerfilDash({
         fotoPerfil,
       };
 
-      localStorage.setItem(
-        "usuario",
-        JSON.stringify(novoUsuario)
-      );
+      localStorage.setItem("usuario", JSON.stringify(novoUsuario));
 
-      showToast?.(
-        "Perfil de cliente atualizado com sucesso!",
-        "success"
-      );
+      showToast?.("Perfil de cliente atualizado com sucesso!", "success");
 
       setFormData((prev) => ({
         ...prev,
         senha: "",
       }));
     } catch (error) {
-      console.error(
-        "Erro ao atualizar perfil do cliente:",
-        error
-      );
+      console.error("Erro ao atualizar perfil do cliente:", error);
 
-      showToast?.(
-        error.message || "Erro ao atualizar perfil.",
-        "error"
-      );
+      showToast?.(error.message || "Erro ao atualizar perfil.", "error");
     } finally {
       setLoading(false);
     }
@@ -258,7 +204,6 @@ export default function ClientePerfilDash({
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-
       {/* Botão voltar */}
       <button
         type="button"
@@ -268,125 +213,128 @@ export default function ClientePerfilDash({
         ← Voltar para o Painel
       </button>
 
-      <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-100">
-
-        {/* Cabeçalho e foto de perfil */}
-        <div className="flex items-center gap-4 mb-8 pb-6 border-b border-slate-100">
-
+      <div className="flex items-center gap-4 mb-8 pb-6 border-b border-slate-100">
+        <div className="relative shrink-0">
           <button
             type="button"
             onContextMenu={abrirModalFoto}
             title="Clique com o botão direito para alterar a foto"
             aria-label="Alterar foto de perfil"
-            className="w-16 h-16 shrink-0 rounded-full overflow-hidden bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl font-bold cursor-pointer hover:ring-4 hover:ring-emerald-200 transition"
+            className="w-16 h-16 rounded-full overflow-hidden bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl font-bold cursor-pointer hover:ring-4 hover:ring-emerald-100 transition"
           >
             {fotoPerfil ? (
               <img
                 src={fotoPerfil}
-                alt="Foto de perfil do cliente"
+                alt="Foto de perfil"
                 className="w-full h-full object-cover"
               />
+            ) : formData.nome ? (
+              formData.nome.charAt(0).toUpperCase()
             ) : (
-              formData.nome
-                ? formData.nome.charAt(0).toUpperCase()
-                : "C"
+              "M"
             )}
           </button>
 
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">
-              Meu Perfil
-            </h1>
+          {showFotoModal && (
+            <div
+              role="dialog"
+              aria-label="Alterar foto de perfil"
+              className="absolute left-0 top-full z-[9999] mt-3 w-80 max-w-[calc(100vw-3rem)] rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">
+                    Foto de perfil
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Escolha uma imagem para sua conta.
+                  </p>
+                </div>
 
-            <p className="text-sm text-slate-500">
-              Gerencie suas informações pessoais e sua conta.
-            </p>
+                <button
+                  type="button"
+                  onClick={fecharModalFoto}
+                  disabled={enviandoFoto}
+                  aria-label="Fechar"
+                  className="text-slate-400 hover:text-slate-700 transition text-lg"
+                >
+                  <i className="fas fa-times" />
+                </button>
+              </div>
 
-            <p className="text-xs text-emerald-600 mt-1">
-              Clique com o botão direito na foto para alterá-la.
-            </p>
-          </div>
+              <div className="flex justify-center mb-4">
+                <div className="w-20 h-20 rounded-full overflow-hidden bg-emerald-50 border border-slate-200 flex items-center justify-center text-2xl font-bold text-emerald-700">
+                  {fotoTemporaria ? (
+                    <img
+                      src={fotoTemporaria}
+                      alt="Prévia da nova foto"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : formData.nome ? (
+                    formData.nome.charAt(0).toUpperCase()
+                  ) : (
+                    "M"
+                  )}
+                </div>
+              </div>
+
+              <label
+                htmlFor="arquivo-foto-perfil"
+                className="block text-xs font-semibold text-slate-600 mb-2"
+              >
+                Selecionar imagem
+              </label>
+
+              <input
+                id="arquivo-foto-perfil"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={handleSelecionarFoto}
+                disabled={enviandoFoto}
+                className="block w-full text-xs text-slate-500 file:mr-2 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100"
+              />
+
+              <p className="mt-2 text-xs text-slate-400">
+                PNG, JPEG ou WebP · Máximo de 2 MB
+              </p>
+
+              <div className="flex gap-2 mt-5">
+                <button
+                  type="button"
+                  onClick={fecharModalFoto}
+                  disabled={enviandoFoto}
+                  className="flex-1 rounded-lg border border-slate-200 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSalvarFoto}
+                  disabled={!arquivoFoto || enviandoFoto}
+                  className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition"
+                >
+                  {enviandoFoto ? "Salvando..." : "Salvar"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Formulário de perfil */}
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">
+            Perfil do Mentor
+          </h1>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">
-                Nome Completo
-              </label>
+          <p className="text-sm text-slate-500">
+            Configure suas informações, cargo e especialidades.
+          </p>
 
-              <input
-                type="text"
-                name="nome"
-                value={formData.nome}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-800 text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">
-                E-mail
-              </label>
-
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                disabled
-                className="w-full px-4 py-3 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 text-sm cursor-not-allowed"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">
-                Telefone
-              </label>
-
-              <input
-                type="tel"
-                name="telefone"
-                value={formData.telefone}
-                onChange={handleChange}
-                placeholder="(00) 00000-0000"
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-800 text-sm"
-              />
-            </div>
-          </div>
-
-          {/* Nova senha */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase mb-2">
-              Nova Senha
-            </label>
-
-            <input
-              type="password"
-              name="senha"
-              value={formData.senha}
-              onChange={handleChange}
-              autoComplete="new-password"
-              placeholder="Deixe em branco para manter a atual"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-800 text-sm"
-            />
-          </div>
-
-          <div className="flex justify-end pt-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-3 rounded-xl transition-colors disabled:opacity-50"
-            >
-              {loading ? "Salvando..." : "Salvar Perfil"}
-            </button>
-          </div>
-        </form>
+          <p className="text-xs text-emerald-600 mt-1">
+            Clique com o botão direito na foto para alterá-la.
+          </p>
+        </div>
       </div>
 
       {/* Modal para alterar a foto */}
@@ -436,10 +384,10 @@ export default function ClientePerfilDash({
                     alt="Prévia da foto selecionada"
                     className="h-full w-full object-cover"
                   />
+                ) : formData.nome ? (
+                  formData.nome.charAt(0).toUpperCase()
                 ) : (
-                  formData.nome
-                    ? formData.nome.charAt(0).toUpperCase()
-                    : "C"
+                  "C"
                 )}
               </div>
             </div>
