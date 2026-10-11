@@ -11,6 +11,7 @@ import {
   buscarConversasMentorApi,
   excluirMensagemApi,
   buscarTodosCasesApi,
+  buscarMeusCasesApi,
 } from "../services/api";
 
 import {
@@ -80,7 +81,8 @@ export default function MentorDashboard({ user, showToast }) {
 
   function eMinhaMensagem(mensagem) {
     if (!mensagem || !user) return false;
-    if (typeof mensagem.minhaMensagem === "boolean") return mensagem.minhaMensagem;
+    if (typeof mensagem.minhaMensagem === "boolean")
+      return mensagem.minhaMensagem;
     if (typeof mensagem.isMine === "boolean") return mensagem.isMine;
     if (typeof mensagem.minha === "boolean") return mensagem.minha;
 
@@ -95,22 +97,37 @@ export default function MentorDashboard({ user, showToast }) {
         mensagem.autorId ||
         mensagem.remetente?.id ||
         mensagem.usuario?.id ||
-        ""
+        "",
     ).trim();
 
     if (meuId && remetenteId && meuId === remetenteId) return true;
 
-    const meuEmail = String(user.email || user.usuario?.email || "").toLowerCase().trim();
+    const meuEmail = String(user.email || user.usuario?.email || "")
+      .toLowerCase()
+      .trim();
     const remetenteEmail = String(
-      mensagem.emailRemetente || mensagem.remetenteEmail || mensagem.remetente?.email || ""
-    ).toLowerCase().trim();
+      mensagem.emailRemetente ||
+        mensagem.remetenteEmail ||
+        mensagem.remetente?.email ||
+        "",
+    )
+      .toLowerCase()
+      .trim();
 
     if (meuEmail && remetenteEmail && meuEmail === remetenteEmail) return true;
 
-    const meuNome = String(user.nome || user.name || user.usuario?.nome || "").toLowerCase().trim();
+    const meuNome = String(user.nome || user.name || user.usuario?.nome || "")
+      .toLowerCase()
+      .trim();
     const nomeRemetente = String(
-      mensagem.nomeRemetente || mensagem.remetenteNome || mensagem.autor || mensagem.remetente?.nome || ""
-    ).toLowerCase().trim();
+      mensagem.nomeRemetente ||
+        mensagem.remetenteNome ||
+        mensagem.autor ||
+        mensagem.remetente?.nome ||
+        "",
+    )
+      .toLowerCase()
+      .trim();
 
     if (meuNome && nomeRemetente && meuNome === nomeRemetente) return true;
 
@@ -150,10 +167,11 @@ export default function MentorDashboard({ user, showToast }) {
   async function carregarCases() {
     try {
       setLoadingCases(true);
-      const data = await buscarTodosCasesApi();
+      const data = await buscarMeusCasesApi();
       setCases(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Erro ao carregar cases:", error);
+      console.error("Erro ao carregar meus cases:", error);
+      showToast?.(error.message || "Erro ao carregar meus cases");
     } finally {
       setLoadingCases(false);
     }
@@ -178,10 +196,12 @@ export default function MentorDashboard({ user, showToast }) {
       try {
         await conectarChat((solicitacao) => {
           setSolicitacoes((prev) => {
-            const existe = prev.some((item) => Number(item.id) === Number(solicitacao.id));
+            const existe = prev.some(
+              (item) => Number(item.id) === Number(solicitacao.id),
+            );
             if (existe) {
               return prev.map((item) =>
-                Number(item.id) === Number(solicitacao.id) ? solicitacao : item
+                Number(item.id) === Number(solicitacao.id) ? solicitacao : item,
               );
             }
             return [solicitacao, ...prev];
@@ -218,7 +238,7 @@ export default function MentorDashboard({ user, showToast }) {
         if (evento?.mensagemId) {
           if (Number(conversaAtualRef.current) === Number(conversa.id)) {
             setMensagensChat((prev) =>
-              prev.filter((m) => Number(m.id) !== Number(evento.mensagemId))
+              prev.filter((m) => Number(m.id) !== Number(evento.mensagemId)),
             );
           }
           return;
@@ -268,7 +288,9 @@ export default function MentorDashboard({ user, showToast }) {
     try {
       const resposta = await aceitarSolicitacaoApi(solicitacao.id);
       setSolicitacoes((prev) =>
-        prev.map((item) => (Number(item.id) === Number(solicitacao.id) ? resposta : item))
+        prev.map((item) =>
+          Number(item.id) === Number(solicitacao.id) ? resposta : item,
+        ),
       );
       await carregarConversas();
       showToast?.(`Solicitação de ${solicitacao.clienteNome} aceita!`);
@@ -278,12 +300,19 @@ export default function MentorDashboard({ user, showToast }) {
   }
 
   async function recusarSolicitacao(solicitacao) {
-    if (!window.confirm(`Deseja recusar a solicitação de ${solicitacao.clienteNome}?`)) return;
+    if (
+      !window.confirm(
+        `Deseja recusar a solicitação de ${solicitacao.clienteNome}?`,
+      )
+    )
+      return;
 
     try {
       const resposta = await recusarSolicitacaoApi(solicitacao.id);
       setSolicitacoes((prev) =>
-        prev.map((item) => (Number(item.id) === Number(solicitacao.id) ? resposta : item))
+        prev.map((item) =>
+          Number(item.id) === Number(solicitacao.id) ? resposta : item,
+        ),
       );
       showToast?.("Solicitação recusada.");
     } catch (error) {
@@ -324,14 +353,18 @@ export default function MentorDashboard({ user, showToast }) {
 
     let textoFinal = texto;
     if (mensagemRespondendo) {
-      const conteudoLimpo = String(mensagemRespondendo.conteudo || "").replace(/\n/g, " ");
+      const conteudoLimpo = String(mensagemRespondendo.conteudo || "").replace(
+        /\n/g,
+        " ",
+      );
       textoFinal = `» ${mensagemRespondendo.autor}: ${conteudoLimpo}\n${texto}`;
     }
 
     try {
       setEnviandoMensagem(true);
       const sucesso = await enviarMensagem(conversaAtual, textoFinal);
-      if (!sucesso) throw new Error("O WebSocket não conseguiu publicar a mensagem.");
+      if (!sucesso)
+        throw new Error("O WebSocket não conseguiu publicar a mensagem.");
 
       setTextoMensagem("");
       setMensagemRespondendo(null);
@@ -343,11 +376,17 @@ export default function MentorDashboard({ user, showToast }) {
   }
 
   async function excluirMensagem(mensagemId) {
-    if (!conversaAtual || !window.confirm("Deseja realmente excluir esta mensagem?")) return;
+    if (
+      !conversaAtual ||
+      !window.confirm("Deseja realmente excluir esta mensagem?")
+    )
+      return;
 
     try {
       await excluirMensagemApi(conversaAtual, mensagemId);
-      setMensagensChat((prev) => prev.filter((m) => Number(m.id) !== Number(mensagemId)));
+      setMensagensChat((prev) =>
+        prev.filter((m) => Number(m.id) !== Number(mensagemId)),
+      );
       showToast?.("Mensagem excluída com sucesso!");
     } catch (error) {
       showToast?.(error.message || "Erro ao excluir mensagem");
@@ -364,7 +403,11 @@ export default function MentorDashboard({ user, showToast }) {
     try {
       setCriandoHorario(true);
       const [date, time] = novoHorario.dataHora.split("T");
-      const payload = { dtMentoria: date, hrMentoria: time, valor: Number(novoHorario.valor) };
+      const payload = {
+        dtMentoria: date,
+        hrMentoria: time,
+        valor: Number(novoHorario.valor),
+      };
 
       const novo = await criarAgendaApi(payload);
       setAgendaSlots((prev) => [...prev, novo]);
@@ -399,7 +442,9 @@ export default function MentorDashboard({ user, showToast }) {
   function formatarData(data) {
     if (!data) return "";
     const partes = data.split("-");
-    return partes.length === 3 ? `${partes[2]}/${partes[1]}/${partes[0]}` : data;
+    return partes.length === 3
+      ? `${partes[2]}/${partes[1]}/${partes[0]}`
+      : data;
   }
 
   function formatarValor(valor) {
@@ -411,7 +456,10 @@ export default function MentorDashboard({ user, showToast }) {
     const dataObj = new Date(data);
     if (Number.isNaN(dataObj.getTime())) return "";
 
-    return dataObj.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    return dataObj.toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   }
 
   function gerarIniciais(nome) {
@@ -438,7 +486,7 @@ export default function MentorDashboard({ user, showToast }) {
   });
 
   const conversaAtualObj = conversas.find(
-    (c) => Number(c.id) === Number(conversaAtual)
+    (c) => Number(c.id) === Number(conversaAtual),
   );
 
   return (
@@ -535,25 +583,44 @@ export default function MentorDashboard({ user, showToast }) {
         {activeTab === "agenda" && (
           <div className="space-y-6">
             <div className="bg-white rounded-2xl border p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-slate-800 mb-5">Criar novo horário</h2>
-              <form onSubmit={handleCriarHorario} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <h2 className="text-xl font-bold text-slate-800 mb-5">
+                Criar novo horário
+              </h2>
+              <form
+                onSubmit={handleCriarHorario}
+                className="grid grid-cols-1 md:grid-cols-3 gap-4"
+              >
                 <div>
-                  <label className="block text-sm font-semibold text-slate-600 mb-2">Data e horário</label>
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
+                    Data e horário
+                  </label>
                   <input
                     type="datetime-local"
                     value={novoHorario.dataHora}
-                    onChange={(e) => setNovoHorario((prev) => ({ ...prev, dataHora: e.target.value }))}
+                    onChange={(e) =>
+                      setNovoHorario((prev) => ({
+                        ...prev,
+                        dataHora: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-600 mb-2">Valor</label>
+                  <label className="block text-sm font-semibold text-slate-600 mb-2">
+                    Valor
+                  </label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={novoHorario.valor}
-                    onChange={(e) => setNovoHorario((prev) => ({ ...prev, valor: e.target.value }))}
+                    onChange={(e) =>
+                      setNovoHorario((prev) => ({
+                        ...prev,
+                        valor: e.target.value,
+                      }))
+                    }
                     placeholder="90.00"
                     className="w-full px-4 py-3 border rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
                   />
@@ -572,28 +639,44 @@ export default function MentorDashboard({ user, showToast }) {
 
             <div className="bg-white rounded-2xl border p-6 shadow-sm">
               <div className="flex justify-between items-center mb-5">
-                <h2 className="text-xl font-bold text-slate-800">Minha Agenda</h2>
-                <button onClick={carregarAgenda} className="text-sm text-emerald-600 font-semibold hover:underline">
+                <h2 className="text-xl font-bold text-slate-800">
+                  Minha Agenda
+                </h2>
+                <button
+                  onClick={carregarAgenda}
+                  className="text-sm text-emerald-600 font-semibold hover:underline"
+                >
                   Atualizar
                 </button>
               </div>
 
               {loadingAgenda ? (
-                <div className="p-6 text-center text-slate-500">Carregando agenda...</div>
+                <div className="p-6 text-center text-slate-500">
+                  Carregando agenda...
+                </div>
               ) : agendaSlots.length === 0 ? (
-                <div className="p-8 text-center rounded-xl bg-slate-50 text-slate-500">Nenhum horário cadastrado.</div>
+                <div className="p-8 text-center rounded-xl bg-slate-50 text-slate-500">
+                  Nenhum horário cadastrado.
+                </div>
               ) : (
                 <div className="space-y-3">
                   {agendaSlots.map((slot) => (
-                    <div key={slot.id} className="border rounded-xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div
+                      key={slot.id}
+                      className="border rounded-xl p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+                    >
                       <div>
                         <h4 className="font-bold text-slate-900">
                           {formatarData(slot.dtMentoria)} às {slot.hrMentoria}
                         </h4>
-                        <p className="text-sm text-slate-500 mt-1">Valor: R$ {formatarValor(slot.valor)}</p>
+                        <p className="text-sm text-slate-500 mt-1">
+                          Valor: R$ {formatarValor(slot.valor)}
+                        </p>
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${slot.situacao === "DISPONIVEL" ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-bold ${slot.situacao === "DISPONIVEL" ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-700"}`}
+                        >
                           {slot.situacao}
                         </span>
                         {slot.situacao === "DISPONIVEL" && (
@@ -602,7 +685,9 @@ export default function MentorDashboard({ user, showToast }) {
                             disabled={excluindoId === slot.id}
                             className="px-4 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-semibold hover:bg-red-100 transition-all disabled:opacity-50"
                           >
-                            {excluindoId === slot.id ? "Excluindo..." : "Excluir"}
+                            {excluindoId === slot.id
+                              ? "Excluindo..."
+                              : "Excluir"}
                           </button>
                         )}
                       </div>
@@ -614,27 +699,106 @@ export default function MentorDashboard({ user, showToast }) {
           </div>
         )}
 
-     {/* LISTAGEM DOS CASES DO CLIENTE */} 
-     
-     
+        {/* LISTAGEM DOS CASES DO CLIENTE */}
+
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          {" "}
+          <h3 className="text-lg font-bold text-slate-800 mb-4">
+            {" "}
+            Meus Cases Cadastrados{" "}
+          </h3>{" "}
+          {loadingCases ? (
+            <div className="text-center p-4 text-slate-500">
+              {" "}
+              Carregando seus cases...{" "}
+            </div>
+          ) : meusCases.length === 0 ? (
+            <div className="text-center p-6 text-slate-400">
+              {" "}
+              Você ainda não publicou nenhum case.{" "}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {" "}
+              {meusCases.map((c) => (
+                <div
+                  key={c.id}
+                  className="border border-slate-200 rounded-xl p-5"
+                >
+                  {" "}
+                  <div className="flex justify-between items-start gap-4">
+                    {" "}
+                    <div className="flex items-center gap-3 min-w-0">
+                      {" "}
+                      {/* Ícone de perfil */}{" "}
+                      <div className="w-11 h-11 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                        {" "}
+                        <i className="fas fa-user text-lg"></i>{" "}
+                      </div>{" "}
+                      <div className="min-w-0">
+                        {" "}
+                        <h4 className="font-bold text-slate-900 break-words">
+                          {" "}
+                          {c.titulo}{" "}
+                        </h4>{" "}
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {" "}
+                          Meu case{" "}
+                        </p>{" "}
+                      </div>{" "}
+                    </div>{" "}
+                    <span className="text-emerald-700 font-bold text-sm whitespace-nowrap">
+                      {" "}
+                      R$ {Number(c.valorEstipulado || 0).toFixed(2)}{" "}
+                    </span>{" "}
+                  </div>{" "}
+                  <p className="text-sm text-slate-600 mt-3"> {c.descricao} </p>{" "}
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {" "}
+                    {c.especialidades?.map((esp, idx) => (
+                      <span
+                        key={idx}
+                        className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium"
+                      >
+                        {" "}
+                        {esp}{" "}
+                      </span>
+                    ))}{" "}
+                  </div>{" "}
+                </div>
+              ))}{" "}
+            </div>
+          )}{" "}
+        </div>
 
         {/* ABA SOLICITAÇÕES */}
         {activeTab === "solicitacoes" && (
           <div className="bg-white rounded-2xl border p-6 shadow-sm">
             <div className="flex justify-between items-center mb-5">
               <div>
-                <h2 className="text-xl font-bold text-slate-800">Solicitações de Chat</h2>
-                <p className="text-sm text-slate-500 mt-1">Clientes que querem conversar com você.</p>
+                <h2 className="text-xl font-bold text-slate-800">
+                  Solicitações de Chat
+                </h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  Clientes que querem conversar com você.
+                </p>
               </div>
-              <button onClick={carregarSolicitacoes} className="text-sm text-emerald-600 font-semibold hover:underline">
+              <button
+                onClick={carregarSolicitacoes}
+                className="text-sm text-emerald-600 font-semibold hover:underline"
+              >
                 Atualizar
               </button>
             </div>
 
             {loadingSolicitacoes ? (
-              <div className="p-8 text-center text-slate-500">Carregando solicitações...</div>
+              <div className="p-8 text-center text-slate-500">
+                Carregando solicitações...
+              </div>
             ) : pendentes.length === 0 ? (
-              <div className="p-8 text-center rounded-xl bg-slate-50 text-slate-500">Nenhuma solicitação pendente.</div>
+              <div className="p-8 text-center rounded-xl bg-slate-50 text-slate-500">
+                Nenhuma solicitação pendente.
+              </div>
             ) : (
               <div className="space-y-4">
                 {pendentes.map((sol) => (
@@ -645,11 +809,17 @@ export default function MentorDashboard({ user, showToast }) {
                           {gerarIniciais(sol.clienteNome)}
                         </div>
                         <div>
-                          <h3 className="font-bold text-slate-900">{sol.clienteNome}</h3>
-                          <p className="text-sm text-slate-500">Solicitação de conversa</p>
+                          <h3 className="font-bold text-slate-900">
+                            {sol.clienteNome}
+                          </h3>
+                          <p className="text-sm text-slate-500">
+                            Solicitação de conversa
+                          </p>
                         </div>
                       </div>
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">PENDENTE</span>
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">
+                        PENDENTE
+                      </span>
                     </div>
 
                     <div className="flex gap-3 mt-5">
@@ -677,21 +847,32 @@ export default function MentorDashboard({ user, showToast }) {
         {activeTab === "chat" && (
           <div className="bg-slate-100 rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
             <div className="flex h-[720px]">
-              <div className={`w-full md:w-80 bg-white border-r border-slate-200 flex flex-col ${conversaAtual ? "hidden md:flex" : "flex"}`}>
+              <div
+                className={`w-full md:w-80 bg-white border-r border-slate-200 flex flex-col ${conversaAtual ? "hidden md:flex" : "flex"}`}
+              >
                 <div className="p-4 border-b border-slate-100 bg-slate-50/70">
                   <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <i className="fas fa-comments text-emerald-600"></i>Conversas
+                    <i className="fas fa-comments text-emerald-600"></i>
+                    Conversas
                   </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">Seus clientes atendidos</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Seus clientes atendidos
+                  </p>
                 </div>
 
                 <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
                   {loadingConversas ? (
-                    <div className="p-6 text-center text-slate-500 text-sm">Carregando conversas...</div>
+                    <div className="p-6 text-center text-slate-500 text-sm">
+                      Carregando conversas...
+                    </div>
                   ) : conversas.length === 0 ? (
                     <div className="p-8 text-center text-slate-400">
-                      <p className="font-semibold text-slate-600">Nenhuma conversa</p>
-                      <p className="text-xs text-slate-400 mt-1">Suas conversas aparecerão aqui.</p>
+                      <p className="font-semibold text-slate-600">
+                        Nenhuma conversa
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Suas conversas aparecerão aqui.
+                      </p>
                     </div>
                   ) : (
                     conversas.map((c) => (
@@ -706,8 +887,12 @@ export default function MentorDashboard({ user, showToast }) {
                             {gerarIniciais(c.clienteNome)}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-slate-800 text-sm truncate">{c.clienteNome}</p>
-                            <p className="text-xs text-slate-400">conversa ativa</p>
+                            <p className="font-semibold text-slate-800 text-sm truncate">
+                              {c.clienteNome}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                              conversa ativa
+                            </p>
                           </div>
                         </div>
                       </button>
@@ -716,20 +901,30 @@ export default function MentorDashboard({ user, showToast }) {
                 </div>
               </div>
 
-              <div className={`flex-1 min-w-0 flex flex-col bg-[#f0f2f5] ${conversaAtual ? "flex" : "hidden md:flex"}`}>
+              <div
+                className={`flex-1 min-w-0 flex flex-col bg-[#f0f2f5] ${conversaAtual ? "flex" : "hidden md:flex"}`}
+              >
                 {!conversaAtual ? (
                   <div className="flex-1 flex items-center justify-center bg-slate-50/50">
                     <div className="text-center text-slate-400 p-6">
                       <i className="fas fa-paper-plane text-4xl text-emerald-500 mb-3"></i>
-                      <h3 className="text-lg font-bold text-slate-700">Seu Chat de Mentoria</h3>
-                      <p className="text-xs mt-1 text-slate-400">Selecione uma conversa ao lado para conversar.</p>
+                      <h3 className="text-lg font-bold text-slate-700">
+                        Seu Chat de Mentoria
+                      </h3>
+                      <p className="text-xs mt-1 text-slate-400">
+                        Selecione uma conversa ao lado para conversar.
+                      </p>
                     </div>
                   </div>
                 ) : (
                   <>
                     <div className="h-[68px] flex-shrink-0 px-5 bg-white border-b border-slate-200 flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <button type="button" onClick={fecharConversa} className="md:hidden w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center">
+                        <button
+                          type="button"
+                          onClick={fecharConversa}
+                          className="md:hidden w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center"
+                        >
                           <i className="fas fa-arrow-left"></i>
                         </button>
                         <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
@@ -739,10 +934,16 @@ export default function MentorDashboard({ user, showToast }) {
                           <h3 className="font-bold text-slate-800 text-sm">
                             {conversaAtualObj?.clienteNome || "Cliente"}
                           </h3>
-                          <span className="text-[11px] text-slate-400">conversa</span>
+                          <span className="text-[11px] text-slate-400">
+                            conversa
+                          </span>
                         </div>
                       </div>
-                      <button type="button" onClick={fecharConversa} className="hidden md:flex w-9 h-9 rounded-full hover:bg-slate-100 text-slate-400 items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={fecharConversa}
+                        className="hidden md:flex w-9 h-9 rounded-full hover:bg-slate-100 text-slate-400 items-center justify-center"
+                      >
                         <i className="fas fa-times"></i>
                       </button>
                     </div>
@@ -750,32 +951,59 @@ export default function MentorDashboard({ user, showToast }) {
                     <div className="flex-1 min-h-0 overflow-y-auto px-4 py-6 bg-[#e5ddd5]/30">
                       {loadingChat ? (
                         <div className="h-full flex items-center justify-center">
-                          <div className="bg-white rounded-2xl px-6 py-4 shadow-sm text-sm text-slate-500">Carregando mensagens...</div>
+                          <div className="bg-white rounded-2xl px-6 py-4 shadow-sm text-sm text-slate-500">
+                            Carregando mensagens...
+                          </div>
                         </div>
                       ) : mensagensChat.length === 0 ? (
                         <div className="h-full flex items-center justify-center">
                           <div className="bg-white rounded-2xl px-6 py-5 text-center shadow-xs border border-slate-100 max-w-xs">
-                            <p className="text-sm font-bold text-slate-700">Nenhuma mensagem ainda</p>
-                            <p className="text-xs text-slate-400 mt-1">Envie a primeira mensagem para começar.</p>
+                            <p className="text-sm font-bold text-slate-700">
+                              Nenhuma mensagem ainda
+                            </p>
+                            <p className="text-xs text-slate-400 mt-1">
+                              Envie a primeira mensagem para começar.
+                            </p>
                           </div>
                         </div>
                       ) : (
                         <div className="max-w-3xl mx-auto space-y-3">
                           {mensagensChat.map((mensagem) => {
                             const minha = eMinhaMensagem(mensagem);
-                            const autorNome = minha ? "Você" : mensagem.nomeRemetente || "Cliente";
+                            const autorNome = minha
+                              ? "Você"
+                              : mensagem.nomeRemetente || "Cliente";
 
                             return (
-                              <div key={mensagem.id} className={`flex w-full ${minha ? "justify-end" : "justify-start"}`}>
-                                <div className={`group max-w-[85%] md:max-w-[70%] px-4 py-2.5 ${minha ? "bg-emerald-600 text-white rounded-2xl rounded-tr-none" : "bg-white text-slate-800 rounded-2xl rounded-tl-none border border-slate-200"}`}>
-                                  <span className={`text-[11px] font-bold block mb-1 ${minha ? "text-emerald-100 text-right" : "text-emerald-700"}`}>
+                              <div
+                                key={mensagem.id}
+                                className={`flex w-full ${minha ? "justify-end" : "justify-start"}`}
+                              >
+                                <div
+                                  className={`group max-w-[85%] md:max-w-[70%] px-4 py-2.5 ${minha ? "bg-emerald-600 text-white rounded-2xl rounded-tr-none" : "bg-white text-slate-800 rounded-2xl rounded-tl-none border border-slate-200"}`}
+                                >
+                                  <span
+                                    className={`text-[11px] font-bold block mb-1 ${minha ? "text-emerald-100 text-right" : "text-emerald-700"}`}
+                                  >
                                     {autorNome}
                                   </span>
-                                  <p className="text-[14px] leading-relaxed whitespace-pre-wrap break-words">{mensagem.conteudo}</p>
-                                  <div className={`flex items-center justify-end gap-2 mt-1 ${minha ? "text-emerald-100" : "text-slate-400"}`}>
-                                    <span className="text-[10px]">{formatarMensagemHora(mensagem.dataEnvio)}</span>
+                                  <p className="text-[14px] leading-relaxed whitespace-pre-wrap break-words">
+                                    {mensagem.conteudo}
+                                  </p>
+                                  <div
+                                    className={`flex items-center justify-end gap-2 mt-1 ${minha ? "text-emerald-100" : "text-slate-400"}`}
+                                  >
+                                    <span className="text-[10px]">
+                                      {formatarMensagemHora(mensagem.dataEnvio)}
+                                    </span>
                                     {minha && (
-                                      <button type="button" onClick={() => excluirMensagem(mensagem.id)} className="opacity-0 group-hover:opacity-100 text-[11px]">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          excluirMensagem(mensagem.id)
+                                        }
+                                        className="opacity-0 group-hover:opacity-100 text-[11px]"
+                                      >
                                         <i className="fas fa-trash-alt"></i>
                                       </button>
                                     )}
@@ -789,7 +1017,10 @@ export default function MentorDashboard({ user, showToast }) {
                       )}
                     </div>
 
-                    <form onSubmit={enviarMensagemChat} className="flex-shrink-0 bg-white border-t border-slate-200 px-4 py-3">
+                    <form
+                      onSubmit={enviarMensagemChat}
+                      className="flex-shrink-0 bg-white border-t border-slate-200 px-4 py-3"
+                    >
                       <div className="max-w-3xl mx-auto flex items-center gap-2">
                         <div className="flex-1 bg-slate-100 rounded-2xl border border-slate-200 px-4 flex items-center">
                           <input
@@ -806,7 +1037,11 @@ export default function MentorDashboard({ user, showToast }) {
                           disabled={enviandoMensagem || !textoMensagem.trim()}
                           className="w-11 h-11 rounded-full bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-700 disabled:opacity-40 transition-all"
                         >
-                          {enviandoMensagem ? <i className="fas fa-circle-notch fa-spin text-sm"></i> : <i className="fas fa-paper-plane text-sm"></i>}
+                          {enviandoMensagem ? (
+                            <i className="fas fa-circle-notch fa-spin text-sm"></i>
+                          ) : (
+                            <i className="fas fa-paper-plane text-sm"></i>
+                          )}
                         </button>
                       </div>
                     </form>
