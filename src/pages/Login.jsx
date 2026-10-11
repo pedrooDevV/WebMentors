@@ -392,7 +392,7 @@ export default function Login({ setUser, setIsBackendConnected, showToast }) {
                       value={cadastroForm.cargo}
                       onChange={handleCadastroChange}
                       className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-xl"
-                      placeholder="Ex.: Desenvolvedor Java"
+                      placeholder="Ex.: Músico"
                     />
                   </div>
 

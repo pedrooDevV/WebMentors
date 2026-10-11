@@ -614,62 +614,7 @@ export default function MentorDashboard({ user, showToast }) {
           </div>
         )}
 
-        {/* ABA CASES DOS CLIENTES */}
-        {activeTab === "cases" && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <div className="flex justify-between items-center mb-4">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-800">Cases dos Clientes</h2>
-                  <p className="text-sm text-slate-500 mt-1">Explore os problemas publicados pelos clientes para oferecer mentoria.</p>
-                </div>
-                <button onClick={carregarCases} className="text-sm text-emerald-600 font-semibold hover:underline">
-                  Atualizar
-                </button>
-              </div>
-
-              <input
-                type="text"
-                placeholder="Buscar por título, descrição ou especialidade..."
-                value={searchCase}
-                onChange={(e) => setSearchCase(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-500 text-sm mb-6"
-              />
-
-              {loadingCases ? (
-                <div className="p-8 text-center text-slate-500">Carregando cases...</div>
-              ) : casesFiltrados.length === 0 ? (
-                <div className="p-8 text-center rounded-xl bg-slate-50 text-slate-500">Nenhum case encontrado.</div>
-              ) : (
-                <div className="grid grid-cols-1 gap-4">
-                  {casesFiltrados.map((c) => (
-                    <div key={c.id} className="border border-slate-200 rounded-2xl p-6 bg-white shadow-sm hover:border-emerald-500 transition">
-                      <div className="flex justify-between items-start mb-3">
-                        <h3 className="text-lg font-bold text-slate-900">{c.titulo}</h3>
-                        <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800">
-                          R$ {Number(c.valorEstipulado || 0).toFixed(2)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-600 mb-4 whitespace-pre-line">{c.descricao}</p>
-                      {c.especialidades && c.especialidades.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {c.especialidades.map((esp, idx) => (
-                            <span key={idx} className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-medium">
-                              {esp}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      <div className="border-t border-slate-100 pt-3 flex justify-between items-center text-xs text-slate-400">
-                        <span>Criado em: {new Date(c.dataCriacao).toLocaleDateString("pt-BR")}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+     {/* LISTAGEM DOS CASES DO CLIENTE */} <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm"> <h3 className="text-lg font-bold text-slate-800 mb-4"> Meus Cases Cadastrados </h3> {loadingCases ? ( <div className="text-center p-4 text-slate-500"> Carregando seus cases... </div> ) : meusCases.length === 0 ? ( <div className="text-center p-6 text-slate-400"> Você ainda não publicou nenhum case. </div> ) : ( <div className="space-y-4"> {meusCases.map((c) => ( <div key={c.id} className="border border-slate-200 rounded-xl p-5" > <div className="flex justify-between items-start gap-4"> <div className="flex items-center gap-3 min-w-0"> {/* Ícone de perfil */} <div className="w-11 h-11 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0"> <i className="fas fa-user text-lg"></i> </div> <div className="min-w-0"> <h4 className="font-bold text-slate-900 break-words"> {c.titulo} </h4> <p className="text-xs text-slate-500 mt-0.5"> Meu case </p> </div> </div> <span className="text-emerald-700 font-bold text-sm whitespace-nowrap"> R$ {Number(c.valorEstipulado || 0).toFixed(2)} </span> </div> <p className="text-sm text-slate-600 mt-3"> {c.descricao} </p> <div className="flex flex-wrap gap-2 mt-3"> {c.especialidades?.map((esp, idx) => ( <span key={idx} className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium" > {esp} </span> ))} </div> </div> ))} </div> )} </div>
 
         {/* ABA SOLICITAÇÕES */}
         {activeTab === "solicitacoes" && (
