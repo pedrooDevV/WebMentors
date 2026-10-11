@@ -8,19 +8,31 @@ function getToken() {
   return localStorage.getItem("token");
 }
 
-export async function atualizarPerfilApi(dadosPerfil) {
+
+export async function atualizarFotoPerfilApi(arquivo) {
   const token = getToken();
-  const response = await fetch(`${API_URL}/meu-perfil`, {
+
+  if (!token) {
+    throw new Error("Sua sessão expirou. Entre novamente.");
+  }
+
+  const formData = new FormData();
+  formData.append("arquivo", arquivo);
+
+  const response = await fetch(`${API_URL}/perfil/foto`, {
     method: "PUT",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(dadosPerfil),
+    body: formData,
   });
 
-  return tratarResposta(response, "Erro ao atualizar perfil");
+  return tratarResposta(
+    response,
+    "Erro ao atualizar a foto de perfil."
+  );
 }
+
 
 export async function logoutApi() {
   const token = getToken();
