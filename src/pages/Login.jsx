@@ -127,52 +127,65 @@ export default function Login({ setUser, setIsBackendConnected, showToast }) {
   };
 
   const handleCadastro = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (cadastroForm.role === "MENTOR") {
-      cadastroForm.biografia = cadastroForm.biografia;
-      cadastroForm.cargo = cadastroForm.cargo;
-      cadastroForm.especialidadesIds = cadastroForm.especialidades.map(Number);
-    }
-    {
+  if (cadastroForm.role === "MENTOR") {
+    if (
+      !cadastroForm.especialidades ||
+      cadastroForm.especialidades.length === 0
+    ) {
       showToast("Selecione pelo menos uma especialidade.", "error");
-
       return;
     }
 
-    setIsCadastrando(true);
-
-    try {
-      const dados = {
-        nome: cadastroForm.nome,
-        email: cadastroForm.email,
-        senha: cadastroForm.senha,
-        telefone: cadastroForm.telefone,
-        role: cadastroForm.role,
-      };
-
-      if (cadastroForm.role === "MENTOR") {
-        dados.biografia = cadastroForm.biografia;
-        dados.cargo = cadastroForm.cargo;
-        dados.especialidades = cadastroForm.especialidades;
-      }
-
-      await registrarUsuarioApi(dados);
-
-      showToast("Cadastro realizado com sucesso! Agora faça login.", "success");
-
-      setShowCadastroModal(false);
-
-      setLoginForm({
-        nome: cadastroForm.nome,
-        password: "",
-      });
-    } catch (error) {
-      showToast(error.message || "Erro ao realizar cadastro.", "error");
-    } finally {
-      setIsCadastrando(false);
+    if (!cadastroForm.biografia.trim() || !cadastroForm.cargo.trim()) {
+      showToast("Preencha a biografia e o cargo.", "error");
+      return;
     }
-  };
+  }
+
+  setIsCadastrando(true);
+
+  try {
+    const dados = {
+      nome: cadastroForm.nome.trim(),
+      email: cadastroForm.email.trim(),
+      senha: cadastroForm.senha,
+      telefone: cadastroForm.telefone.trim(),
+      role: cadastroForm.role,
+    };
+
+    if (cadastroForm.role === "MENTOR") {
+      dados.biografia = cadastroForm.biografia.trim();
+      dados.cargo = cadastroForm.cargo.trim();
+
+      dados.especialidadesIds = cadastroForm.especialidades.map(
+        Number
+      );
+    }
+
+    await registrarUsuarioApi(dados);
+
+    showToast(
+      "Cadastro realizado com sucesso! Agora faça login.",
+      "success"
+    );
+
+    setShowCadastroModal(false);
+
+    setLoginForm({
+      nome: cadastroForm.nome,
+      password: "",
+    });
+  } catch (error) {
+    showToast(
+      error.message || "Erro ao realizar cadastro.",
+      "error"
+    );
+  } finally {
+    setIsCadastrando(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
