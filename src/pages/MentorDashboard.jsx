@@ -614,7 +614,9 @@ export default function MentorDashboard({ user, showToast }) {
           </div>
         )}
 
-     {/* LISTAGEM DOS CASES DO CLIENTE */} <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm"> <h3 className="text-lg font-bold text-slate-800 mb-4"> Meus Cases Cadastrados </h3> {loadingCases ? ( <div className="text-center p-4 text-slate-500"> Carregando seus cases... </div> ) : meusCases.length === 0 ? ( <div className="text-center p-6 text-slate-400"> Você ainda não publicou nenhum case. </div> ) : ( <div className="space-y-4"> {meusCases.map((c) => ( <div key={c.id} className="border border-slate-200 rounded-xl p-5" > <div className="flex justify-between items-start gap-4"> <div className="flex items-center gap-3 min-w-0"> {/* Ícone de perfil */} <div className="w-11 h-11 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0"> <i className="fas fa-user text-lg"></i> </div> <div className="min-w-0"> <h4 className="font-bold text-slate-900 break-words"> {c.titulo} </h4> <p className="text-xs text-slate-500 mt-0.5"> Meu case </p> </div> </div> <span className="text-emerald-700 font-bold text-sm whitespace-nowrap"> R$ {Number(c.valorEstipulado || 0).toFixed(2)} </span> </div> <p className="text-sm text-slate-600 mt-3"> {c.descricao} </p> <div className="flex flex-wrap gap-2 mt-3"> {c.especialidades?.map((esp, idx) => ( <span key={idx} className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium" > {esp} </span> ))} </div> </div> ))} </div> )} </div>
+     {/* LISTAGEM DOS CASES DO CLIENTE */} 
+     
+     
 
         {/* ABA SOLICITAÇÕES */}
         {activeTab === "solicitacoes" && (
