@@ -712,7 +712,7 @@ export default function MentorDashboard({ user, showToast }) {
               {" "}
               Carregando seus cases...{" "}
             </div>
-          ) : meusCases.length === 0 ? (
+          ) : cases.length === 0 ? (
             <div className="text-center p-6 text-slate-400">
               {" "}
               Você ainda não publicou nenhum case.{" "}
@@ -720,7 +720,7 @@ export default function MentorDashboard({ user, showToast }) {
           ) : (
             <div className="space-y-4">
               {" "}
-              {meusCases.map((c) => (
+              {cases.map((c) => (
                 <div
                   key={c.id}
                   className="border border-slate-200 rounded-xl p-5"

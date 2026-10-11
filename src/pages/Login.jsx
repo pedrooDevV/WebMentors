@@ -129,10 +129,12 @@ export default function Login({ setUser, setIsBackendConnected, showToast }) {
   const handleCadastro = async (e) => {
     e.preventDefault();
 
-    if (
-      cadastroForm.role === "MENTOR" &&
-      cadastroForm.especialidades.length === 0
-    ) {
+    if (cadastroForm.role === "MENTOR") {
+      dados.biografia = cadastroForm.biografia;
+      dados.cargo = cadastroForm.cargo;
+      dados.especialidadesIds = cadastroForm.especialidades.map(Number);
+    }
+    {
       showToast("Selecione pelo menos uma especialidade.", "error");
 
       return;
