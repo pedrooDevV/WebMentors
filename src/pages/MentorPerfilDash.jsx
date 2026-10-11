@@ -7,11 +7,7 @@ import {
   atualizarFotoPerfilApi,
 } from "../services/api.js";
 
-export default function MentorPerfilDash({
-  user,
-  showToast,
-  onBack,
-}) {
+export default function MentorPerfilDash({ user, showToast, onBack }) {
   const [formData, setFormData] = useState({
     nome: user?.nome || "",
     email: user?.email || "",
@@ -27,9 +23,7 @@ export default function MentorPerfilDash({
   const [carregandoEspecialidades, setCarregandoEspecialidades] =
     useState(true);
 
-  const [fotoPerfil, setFotoPerfil] = useState(
-    user?.fotoPerfil || ""
-  );
+  const [fotoPerfil, setFotoPerfil] = useState(user?.fotoPerfil || "");
   const [showFotoModal, setShowFotoModal] = useState(false);
   const [fotoTemporaria, setFotoTemporaria] = useState("");
   const [arquivoFoto, setArquivoFoto] = useState(null);
@@ -43,16 +37,11 @@ export default function MentorPerfilDash({
       try {
         const dados = await buscarEspecialidades();
 
-        setListaEspecialidades(
-          Array.isArray(dados) ? dados : []
-        );
+        setListaEspecialidades(Array.isArray(dados) ? dados : []);
       } catch (error) {
         console.error("Erro ao carregar especialidades:", error);
 
-        showToast(
-          "Não foi possível carregar as especialidades.",
-          "error"
-        );
+        showToast("Não foi possível carregar as especialidades.", "error");
       } finally {
         setCarregandoEspecialidades(false);
       }
@@ -62,9 +51,7 @@ export default function MentorPerfilDash({
       try {
         const dados = await buscarFotoPerfilApi();
 
-        setFotoPerfil(
-          dados?.fotoUrl || dados?.fotoPerfil || ""
-        );
+        setFotoPerfil(dados?.fotoUrl || dados?.fotoPerfil || "");
       } catch (error) {
         console.error("Erro ao carregar foto:", error);
       }
@@ -117,10 +104,7 @@ export default function MentorPerfilDash({
   };
 
   const handleEspecialidadeToggle = (esp) => {
-    const nomeEsp =
-      typeof esp === "string"
-        ? esp
-        : esp.nome || esp.descricao;
+    const nomeEsp = typeof esp === "string" ? esp : esp.nome || esp.descricao;
 
     setFormData((prev) => {
       const existe = prev.especialidades.includes(nomeEsp);
@@ -128,9 +112,7 @@ export default function MentorPerfilDash({
       return {
         ...prev,
         especialidades: existe
-          ? prev.especialidades.filter(
-              (item) => item !== nomeEsp
-            )
+          ? prev.especialidades.filter((item) => item !== nomeEsp)
           : [...prev.especialidades, nomeEsp],
       };
     });
@@ -154,25 +136,15 @@ export default function MentorPerfilDash({
 
     input.value = "";
 
-    const tiposPermitidos = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-    ];
+    const tiposPermitidos = ["image/jpeg", "image/png", "image/webp"];
 
     if (!tiposPermitidos.includes(arquivo.type)) {
-      showToast(
-        "Selecione uma imagem PNG, JPEG ou WebP.",
-        "error"
-      );
+      showToast("Selecione uma imagem PNG, JPEG ou WebP.", "error");
       return;
     }
 
     if (arquivo.size > 2 * 1024 * 1024) {
-      showToast(
-        "A imagem deve ter no máximo 2 MB.",
-        "error"
-      );
+      showToast("A imagem deve ter no máximo 2 MB.", "error");
       return;
     }
 
@@ -216,40 +188,30 @@ export default function MentorPerfilDash({
       const novaFoto = dados?.fotoUrl || dados?.fotoPerfil;
 
       if (!novaFoto) {
-        throw new Error(
-          "O servidor não retornou a URL da imagem."
-        );
+        throw new Error("O servidor não retornou a URL da imagem.");
       }
 
       setFotoPerfil(novaFoto);
 
-      const usuarioSalvo = JSON.parse(
-        localStorage.getItem("usuario") || "{}"
-      );
+      const usuarioSalvo = JSON.parse(localStorage.getItem("usuario") || "{}");
 
       localStorage.setItem(
         "usuario",
         JSON.stringify({
           ...usuarioSalvo,
           fotoPerfil: novaFoto,
-        })
+        }),
       );
 
       setShowFotoModal(false);
       setFotoTemporaria("");
       setArquivoFoto(null);
 
-      showToast(
-        "Foto de perfil atualizada com sucesso!",
-        "success"
-      );
+      showToast("Foto de perfil atualizada com sucesso!", "success");
     } catch (error) {
       console.error("Erro ao atualizar a foto:", error);
 
-      showToast(
-        error.message || "Erro ao atualizar a foto.",
-        "error"
-      );
+      showToast(error.message || "Erro ao atualizar a foto.", "error");
     } finally {
       setEnviandoFoto(false);
     }
@@ -273,12 +235,9 @@ export default function MentorPerfilDash({
         payload.senha = formData.senha;
       }
 
-      const usuarioAtualizado =
-        await atualizarPerfilApi(payload);
+      const usuarioAtualizado = await atualizarPerfilApi(payload);
 
-      const usuarioSalvo = JSON.parse(
-        localStorage.getItem("usuario") || "{}"
-      );
+      const usuarioSalvo = JSON.parse(localStorage.getItem("usuario") || "{}");
 
       const novoUsuario = {
         ...usuarioSalvo,
@@ -287,27 +246,18 @@ export default function MentorPerfilDash({
         fotoPerfil,
       };
 
-      localStorage.setItem(
-        "usuario",
-        JSON.stringify(novoUsuario)
-      );
+      localStorage.setItem("usuario", JSON.stringify(novoUsuario));
 
       setFormData((prev) => ({
         ...prev,
         senha: "",
       }));
 
-      showToast(
-        "Perfil de mentor atualizado com sucesso!",
-        "success"
-      );
+      showToast("Perfil de mentor atualizado com sucesso!", "success");
     } catch (error) {
       console.error("Erro ao atualizar perfil:", error);
 
-      showToast(
-        error.message || "Erro ao atualizar perfil.",
-        "error"
-      );
+      showToast(error.message || "Erro ao atualizar perfil.", "error");
     } finally {
       setLoading(false);
     }
@@ -326,13 +276,14 @@ export default function MentorPerfilDash({
       <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-100">
         {/* Cabeçalho e foto com popup */}
         <div className="flex items-center gap-4 mb-8 pb-6 border-b border-slate-100">
-          <div
-            ref={fotoPopupRef}
-            className="relative shrink-0"
-          >
+          <div ref={fotoPopupRef} className="relative shrink-0">
             <button
               type="button"
-              onContextMenu={abrirModalFoto}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                abrirModalFoto(e);
+              }}
               title="Clique com o botão direito para alterar a foto"
               aria-label="Alterar foto de perfil"
               className="w-16 h-16 rounded-full overflow-hidden bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl font-bold cursor-pointer hover:ring-4 hover:ring-emerald-100 transition"
@@ -341,12 +292,13 @@ export default function MentorPerfilDash({
                 <img
                   src={fotoPerfil}
                   alt="Foto do mentor"
-                  className="w-full h-full object-cover"
+                  draggable={false}
+                  className="w-full h-full object-cover pointer-events-none"
                 />
+              ) : formData.nome ? (
+                formData.nome.charAt(0).toUpperCase()
               ) : (
-                formData.nome
-                  ? formData.nome.charAt(0).toUpperCase()
-                  : "M"
+                "M"
               )}
             </button>
 
@@ -386,10 +338,10 @@ export default function MentorPerfilDash({
                         alt="Prévia da foto"
                         className="w-full h-full object-cover"
                       />
+                    ) : formData.nome ? (
+                      formData.nome.charAt(0).toUpperCase()
                     ) : (
-                      formData.nome
-                        ? formData.nome.charAt(0).toUpperCase()
-                        : "M"
+                      "M"
                     )}
                   </div>
                 </div>
@@ -520,12 +472,9 @@ export default function MentorPerfilDash({
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {listaEspecialidades.map((esp, index) => {
                   const nomeEsp =
-                    typeof esp === "string"
-                      ? esp
-                      : esp.nome || esp.descricao;
+                    typeof esp === "string" ? esp : esp.nome || esp.descricao;
 
-                  const selecionado =
-                    formData.especialidades.includes(nomeEsp);
+                  const selecionado = formData.especialidades.includes(nomeEsp);
 
                   return (
                     <label
@@ -539,9 +488,7 @@ export default function MentorPerfilDash({
                       <input
                         type="checkbox"
                         checked={selecionado}
-                        onChange={() =>
-                          handleEspecialidadeToggle(esp)
-                        }
+                        onChange={() => handleEspecialidadeToggle(esp)}
                         className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                       />
                       <span>{nomeEsp}</span>
