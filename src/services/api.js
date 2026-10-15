@@ -335,22 +335,23 @@ export async function buscarFotoPerfilApi() {
   );
 }
 
-export async function atualizarFotoPerfilApi(arquivo) {
-  const token = getToken();
-  const formData = new FormData();
 
-  formData.append("foto", arquivo);
+export async function buscarFotoPerfilApi() {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error("Sua sessão expirou. Entre novamente.");
+  }
 
   const response = await fetch(`${API_URL}/perfil/foto`, {
-    method: "PUT",
+    method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
     },
-    body: formData,
   });
 
   return tratarResposta(
     response,
-    "Erro ao atualizar a foto de perfil."
+    "Erro ao carregar a foto de perfil."
   );
 }
