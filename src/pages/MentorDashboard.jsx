@@ -167,16 +167,18 @@ export default function MentorDashboard({ user, showToast }) {
   async function carregarCases() {
     try {
       setLoadingCases(true);
-      const data = await buscarMeusCasesApi();
+
+      // Busca todos os cases publicados pelos clientes
+      const data = await buscarTodosCasesApi();
+
       setCases(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error("Erro ao carregar meus cases:", error);
-      showToast?.(error.message || "Erro ao carregar meus cases");
+      console.error("Erro ao carregar cases dos clientes:", error);
+      showToast?.(error.message || "Erro ao carregar cases dos clientes");
     } finally {
       setLoadingCases(false);
     }
   }
-
   async function carregarAgenda() {
     try {
       setLoadingAgenda(true);
@@ -699,77 +701,99 @@ export default function MentorDashboard({ user, showToast }) {
           </div>
         )}
 
-        {/* LISTAGEM DOS CASES DO CLIENTE */}
+        {/* LISTAGEM DOS CASES DOS CLIENTES */}
+        {activeTab === "cases" && (
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <div className="flex justify-between items-center mb-5">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">
+                  Cases dos Clientes
+                </h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  Confira os cases publicados pelos clientes.
+                </p>
+              </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-          {" "}
-          <h3 className="text-lg font-bold text-slate-800 mb-4">
-            {" "}
-            Meus Cases Cadastrados{" "}
-          </h3>{" "}
-          {loadingCases ? (
-            <div className="text-center p-4 text-slate-500">
-              {" "}
-              Carregando seus cases...{" "}
+              <button
+                onClick={carregarCases}
+                className="text-sm text-emerald-600 font-semibold hover:underline"
+              >
+                Atualizar
+              </button>
             </div>
-          ) : cases.length === 0 ? (
-            <div className="text-center p-6 text-slate-400">
-              {" "}
-              Você ainda não publicou nenhum case.{" "}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {" "}
-              {cases.map((c) => (
-                <div
-                  key={c.id}
-                  className="border border-slate-200 rounded-xl p-5"
-                >
-                  {" "}
-                  <div className="flex justify-between items-start gap-4">
-                    {" "}
-                    <div className="flex items-center gap-3 min-w-0">
-                      {" "}
-                      {/* Ícone de perfil */}{" "}
-                      <div className="w-11 h-11 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                        {" "}
-                        <i className="fas fa-user text-lg"></i>{" "}
-                      </div>{" "}
-                      <div className="min-w-0">
-                        {" "}
-                        <h4 className="font-bold text-slate-900 break-words">
-                          {" "}
-                          {c.titulo}{" "}
-                        </h4>{" "}
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          {" "}
-                          Meu case{" "}
-                        </p>{" "}
-                      </div>{" "}
-                    </div>{" "}
-                    <span className="text-emerald-700 font-bold text-sm whitespace-nowrap">
-                      {" "}
-                      R$ {Number(c.valorEstipulado || 0).toFixed(2)}{" "}
-                    </span>{" "}
-                  </div>{" "}
-                  <p className="text-sm text-slate-600 mt-3"> {c.descricao} </p>{" "}
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {" "}
-                    {c.especialidades?.map((esp, idx) => (
-                      <span
-                        key={idx}
-                        className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium"
-                      >
-                        {" "}
-                        {esp}{" "}
+
+            <input
+              type="text"
+              value={searchCase}
+              onChange={(e) => setSearchCase(e.target.value)}
+              placeholder="Buscar por título, descrição ou especialidade..."
+              className="w-full mb-5 px-4 py-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+
+            {loadingCases ? (
+              <div className="text-center p-6 text-slate-500">
+                Carregando cases dos clientes...
+              </div>
+            ) : casesFiltrados.length === 0 ? (
+              <div className="text-center p-8 rounded-xl bg-slate-50 text-slate-500">
+                {searchCase.trim()
+                  ? "Nenhum case encontrado para essa pesquisa."
+                  : "Nenhum cliente publicou um case ainda."}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {casesFiltrados.map((c) => (
+                  <div
+                    key={c.id}
+                    className="border border-slate-200 rounded-xl p-5 hover:border-emerald-200 transition-colors"
+                  >
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-11 h-11 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                          <i className="fas fa-user text-lg"></i>
+                        </div>
+
+                        <div className="min-w-0">
+                          <h3 className="font-bold text-slate-900 break-words">
+                            {c.titulo}
+                          </h3>
+                          <p className="text-xs text-slate-500 mt-1">
+                            Publicado por:{" "}
+                            {c.clienteNome || c.nomeCliente || "Cliente"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className="text-emerald-700 font-bold text-sm whitespace-nowrap">
+                        R$ {Number(c.valorEstipulado || 0).toFixed(2)}
                       </span>
-                    ))}{" "}
-                  </div>{" "}
-                </div>
-              ))}{" "}
-            </div>
-          )}{" "}
-        </div>
+                    </div>
+
+                    <p className="text-sm text-slate-600 mt-4 whitespace-pre-wrap">
+                      {c.descricao}
+                    </p>
+
+                    {Array.isArray(c.especialidades) &&
+                      c.especialidades.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {c.especialidades.map((esp, idx) => (
+                            <span
+                              key={idx}
+                              className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-medium"
+                            >
+                              {typeof esp === "string"
+                                ? esp
+                                : esp.nome || esp.descricao || "Especialidade"}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ABA SOLICITAÇÕES */}
         {activeTab === "solicitacoes" && (
