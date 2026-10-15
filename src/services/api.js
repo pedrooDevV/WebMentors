@@ -8,7 +8,6 @@ function getToken() {
   return localStorage.getItem("token");
 }
 
-
 export async function atualizarFotoPerfilApi(arquivo) {
   const token = getToken();
 
@@ -27,12 +26,23 @@ export async function atualizarFotoPerfilApi(arquivo) {
     body: formData,
   });
 
-  return tratarResposta(
-    response,
-    "Erro ao atualizar a foto de perfil."
-  );
+  return tratarResposta(response, "Erro ao atualizar a foto de perfil.");
 }
 
+export async function atualizarPerfilApi(dados) {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${API_URL}/perfil`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(dados),
+  });
+
+  return tratarResposta(response, "Erro ao atualizar o perfil.");
+}
 
 export async function logoutApi() {
   const token = getToken();
@@ -333,8 +343,5 @@ export async function buscarFotoPerfilApi() {
     },
   });
 
-  return tratarResposta(
-    response,
-    "Erro ao carregar a foto de perfil."
-  );
+  return tratarResposta(response, "Erro ao carregar a foto de perfil.");
 }
