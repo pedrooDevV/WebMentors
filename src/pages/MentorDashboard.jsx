@@ -759,7 +759,7 @@ export default function MentorDashboard({ user, showToast }) {
                           </h3>
                           <p className="text-xs text-slate-500 mt-1">
                             Publicado por:{" "}
-                            {c.clienteNome || c.nomeCliente || "Cliente"}
+                            {c.nome || c.nomeCliente || "Cliente"}
                           </p>
                         </div>
                       </div>
