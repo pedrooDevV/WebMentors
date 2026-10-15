@@ -322,23 +322,6 @@ export async function excluirMensagemApi(conversaId, mensagemId) {
 export async function buscarFotoPerfilApi() {
   const token = getToken();
 
-  const response = await fetch(`${API_URL}/perfil/foto`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  return tratarResposta(
-    response,
-    "Erro ao carregar a foto de perfil."
-  );
-}
-
-
-export async function buscarFotoPerfilApi() {
-  const token = getToken();
-
   if (!token) {
     throw new Error("Sua sessão expirou. Entre novamente.");
   }
