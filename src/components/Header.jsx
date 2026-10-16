@@ -1,4 +1,6 @@
-import React from "react";
+
+import React, { useEffect, useState } from "react";
+import { buscarFotoPerfilApi } from "../services/api.js";
 
 export default function Header({
   user,
@@ -6,6 +8,55 @@ export default function Header({
   onProfileClick,
   isBackendConnected,
 }) {
+  const [fotoPerfil, setFotoPerfil] = useState("");
+  const [erroFoto, setErroFoto] = useState(false);
+
+  useEffect(() => {
+    let ativo = true;
+
+    // Usa a foto que já estiver disponível no usuário
+    setFotoPerfil(user?.fotoPerfil || user?.fotoUrl || "");
+    setErroFoto(false);
+
+    if (!user) {
+      setFotoPerfil("");
+      return () => {
+        ativo = false;
+      };
+    }
+
+    // Busca a foto atualizada no backend
+    async function carregarFoto() {
+      try {
+        const dados = await buscarFotoPerfilApi();
+
+        if (!ativo) return;
+
+        const foto = dados?.fotoUrl || dados?.fotoPerfil || "";
+
+        setFotoPerfil(typeof foto === "string" ? foto : "");
+      } catch (error) {
+        // Mantém a foto local, se houver, ou mostra a inicial
+        console.error("Não foi possível carregar a foto do perfil:", error);
+      }
+    }
+
+    carregarFoto();
+
+    return () => {
+      ativo = false;
+    };
+  }, [
+    user?.id,
+    user?.nome,
+    user?.role,
+    user?.fotoPerfil,
+    user?.fotoUrl,
+  ]);
+
+  const inicial =
+    user?.nome?.trim()?.charAt(0)?.toUpperCase() || "U";
+
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -58,15 +109,26 @@ export default function Header({
                 type="button"
                 onClick={onProfileClick}
                 title="Meu perfil"
-                className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center border border-emerald-300 hover:bg-emerald-200 hover:border-emerald-400 transition-all cursor-pointer"
+                aria-label="Abrir meu perfil"
+                className="w-10 h-10 shrink-0 overflow-hidden rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center border border-emerald-300 hover:bg-emerald-200 hover:border-emerald-400 transition-all cursor-pointer"
               >
-                {user.nome ? user.nome.charAt(0).toUpperCase() : "U"}
+                {fotoPerfil && !erroFoto ? (
+                  <img
+                    src={fotoPerfil}
+                    alt={`Foto de perfil de ${user.nome || "usuário"}`}
+                    className="w-full h-full object-cover"
+                    onError={() => setErroFoto(true)}
+                  />
+                ) : (
+                  <span>{inicial}</span>
+                )}
               </button>
 
               <button
                 type="button"
                 onClick={onLogout}
                 title="Sair"
+                aria-label="Sair da conta"
                 className="text-slate-400 hover:text-rose-600 p-1.5 transition-colors"
               >
                 <i className="fas fa-sign-out-alt text-lg"></i>
